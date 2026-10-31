@@ -149,14 +149,41 @@ npx playwright show-report
 ## How It Works
 
 ```mermaid
-flowchart TD
-    A["Launch target URL in Chromium"] --> B["Inject in-page observer"]
-    B --> C["Capture clicks, inputs, navigations & DOM mutations"]
-    C --> D["Browser closes / Enter pressed"]
-    D --> E["Event normalizer debounces & deduplicates actions"]
-    E --> F["LLM synthesizes Playwright test with semantic locators"]
-    F --> G["Code formatter validates & strips markdown fences"]
-    G --> H["Write executable .spec.ts to disk"]
+flowchart LR
+    subgraph S1 ["1. Browser Capture"]
+        direction TB
+        A["Chromium Instance"] --> B["In-Page Observer"]
+        B --> C["DOM Mutation Watcher"]
+    end
+
+    subgraph S2 ["2. Normalizer"]
+        direction TB
+        D["Event Normalizer"] --> E["Prompt Compiler"]
+    end
+
+    subgraph S3 ["3. AI Synthesis"]
+        direction TB
+        F["Gemini 3.8 Flash"] --> G["Spec Formatter"]
+    end
+
+    subgraph S4 ["4. Output"]
+        direction TB
+        H["tests/flow.spec.ts"]
+    end
+
+    C -->|"Raw Events"| D
+    E -->|"Context Payload"| F
+    G -->|"Validated Spec"| H
+
+    classDef s1 fill:#0f172a,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef s2 fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef s3 fill:#0f172a,stroke:#c084fc,stroke-width:2px,color:#f8fafc;
+    classDef s4 fill:#0f172a,stroke:#34d399,stroke-width:2px,color:#f8fafc;
+
+    class A,B,C s1;
+    class D,E s2;
+    class F,G s3;
+    class H s4;
 ```
 
 1. **In-Page Observer (`src/core/recorder.ts`):** Injected via `page.addInitScript()`. Captures element tag, accessible role, labels, test IDs, and text content without altering application behavior. Also tracks DOM mutations (alerts, modals, toasts) following click actions.
