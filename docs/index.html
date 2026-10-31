@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>clickspec — AI-Powered Playwright Test Generator</title>
+  <meta name="description" content="CLI tool that records browser interactions and generates maintainable Playwright E2E tests with automated assertions.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m12 19-7-7 7-7'/><path d='M19 12H5'/></svg>">
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              400: '#38bdf8',
+              500: '#0ea5e9',
+              600: '#0284c7',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Subtle dot grid pattern */
+    .bg-grid-pattern {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+    ::selection {
+      background-color: #38bdf8;
+      color: #090d16;
+    }
+  </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-200 font-sans antialiased selection:bg-sky-400 selection:text-slate-950 min-h-screen flex flex-col justify-between">
+
+  <!-- Background decorative light glow -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[720px] h-[400px] bg-sky-500/10 blur-[130px] rounded-full"></div>
+    <div class="absolute top-[40%] right-[-100px] w-[500px] h-[350px] bg-indigo-500/10 blur-[140px] rounded-full"></div>
+  </div>
+
+  <div class="relative z-10">
+    <!-- Navbar -->
+    <header class="border-b border-slate-800/80 bg-[#0b0f19]/80 backdrop-blur-md sticky top-0 z-50">
+      <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <a href="#" class="flex items-center gap-2.5 group">
+          <div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-400 group-hover:border-sky-400 transition">
+            <i data-lucide="play" class="w-4 h-4 fill-sky-400"></i>
+          </div>
+          <span class="font-bold tracking-tight text-white text-lg">clickspec</span>
+        </a>
+
+        <nav class="hidden md:flex items-center gap-8 text-sm text-slate-400">
+          <a href="#why" class="hover:text-white transition">Why Not Codegen</a>
+          <a href="#demo" class="hover:text-white transition">Interactive Demo</a>
+          <a href="#features" class="hover:text-white transition">Architecture</a>
+          <a href="#quickstart" class="hover:text-white transition">Quickstart</a>
+        </nav>
+
+        <div class="flex items-center gap-3">
+          <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-white hover:border-slate-600 transition shadow-sm">
+            <i data-lucide="github" class="w-3.5 h-3.5"></i>
+            <span>Star on GitHub</span>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
+      <!-- Badge -->
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-xs text-slate-400 mb-8 shadow-inner">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span>v1.0.0 is live</span>
+        <span class="text-slate-600">•</span>
+        <span class="text-slate-300">Zero-config Playwright generator</span>
+      </div>
+
+      <!-- Main Headline -->
+      <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.12]">
+        Turn real browser clicks into maintainable Playwright tests.
+      </h1>
+
+      <!-- Subheadline -->
+      <p class="mt-6 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+        <span class="text-slate-200 font-medium">clickspec</span> records live user interactions, tracks DOM mutation signals, and uses AI to generate resilient tests with accessibility-first locators and automated assertions.
+      </p>
+
+      <!-- Terminal Command Copy Box -->
+      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 font-mono text-sm shadow-xl w-full sm:w-auto">
+          <span class="text-sky-400 select-none">$</span>
+          <span id="cli-cmd" class="text-slate-200 select-all">npx clickspec https://example.com</span>
+          <button id="copy-btn" onclick="copyCliCommand()" class="ml-2 text-slate-400 hover:text-white transition p-1.5 rounded-md hover:bg-slate-800" title="Copy command">
+            <i data-lucide="copy" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-white text-slate-950 hover:bg-slate-200 transition shadow-lg shadow-white/5">
+          <span>Read Documentation</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+      </div>
+
+      <p class="mt-3 text-xs text-slate-500">
+        Requires Node.js 18+ and a free Gemini or OpenAI API key.
+      </p>
+    </section>
+
+    <!-- Interactive Code / Demo Preview -->
+    <section id="demo" class="max-w-5xl mx-auto px-6 py-8">
+      <div class="rounded-2xl border border-slate-800 bg-[#0f172a]/70 backdrop-blur-xl shadow-2xl overflow-hidden">
+        
+        <!-- Window Titlebar -->
+        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800/80 bg-slate-900/60">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
+            <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
+            <span class="ml-2 text-xs font-mono text-slate-400">clickspec output comparison</span>
+          </div>
+          <div class="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-md border border-slate-800 text-[11px] font-mono text-slate-400">
+            <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>tests/flow.spec.ts</span>
+          </div>
+        </div>
+
+        <!-- Code Content -->
+        <div class="p-6 font-mono text-xs sm:text-sm overflow-x-auto leading-relaxed">
+          <div class="text-slate-500 select-none">// 1. Imports standard Playwright runner</div>
+          <div><span class="text-sky-400">import</span> { <span class="text-amber-300">test</span>, <span class="text-amber-300">expect</span> } <span class="text-sky-400">from</span> <span class="text-emerald-300">'@playwright/test'</span>;</div>
+          <br>
+          <div><span class="text-purple-400">test</span>(<span class="text-emerald-300">'User completes authentication flow'</span>, <span class="text-sky-400">async</span> ({ <span class="text-slate-200">page</span> }) => {</div>
+          <div class="pl-4 text-slate-500 select-none">// Initial target page navigation</div>
+          <div class="pl-4"><span class="text-sky-400">await</span> page.<span class="text-amber-300">goto</span>(<span class="text-emerald-300">'https://app.example.com/login'</span>);</div>
+          <br>
+          <div class="pl-4 text-slate-500 select-none">// Semantic locators (no fragile div &gt; div selectors)</div>
+          <div class="pl-4"><span class="text-sky-400">await</span> page.<span class="text-amber-300">getByLabel</span>(<span class="text-emerald-300">'Email address'</span>).<span class="text-amber-300">fill</span>(<span class="text-emerald-300">'alex@company.com'</span>);</div>
+          <div class="pl-4"><span class="text-sky-400">await</span> page.<span class="text-amber-300">getByLabel</span>(<span class="text-emerald-300">'Password'</span>).<span class="text-amber-300">fill</span>(<span class="text-emerald-300">'••••••••••••'</span>);</div>
+          <div class="pl-4"><span class="text-sky-400">await</span> page.<span class="text-amber-300">getByRole</span>(<span class="text-emerald-300">'button'</span>, { <span class="text-slate-300">name</span>: <span class="text-emerald-300">'Sign in'</span> }).<span class="text-amber-300">click</span>();</div>
+          <br>
+          <div class="pl-4 text-emerald-400/80 select-none">// Smart assertions inferred automatically from DOM mutations</div>
+          <div class="pl-4"><span class="text-sky-400">await</span> <span class="text-amber-300">expect</span>(page).<span class="text-amber-300">toHaveURL</span>(<span class="text-emerald-300">/.*dashboard/</span>);</div>
+          <div class="pl-4"><span class="text-sky-400">await</span> <span class="text-amber-300">expect</span>(page.<span class="text-amber-300">getByRole</span>(<span class="text-emerald-300">'heading'</span>, { <span class="text-slate-300">name</span>: <span class="text-emerald-300">'Overview'</span> })).<span class="text-amber-300">toBeVisible</span>();</div>
+          <div class="pl-4"><span class="text-sky-400">await</span> <span class="text-amber-300">expect</span>(page.<span class="text-amber-300">getByRole</span>(<span class="text-emerald-300">'status'</span>)).<span class="text-amber-300">toContainText</span>(<span class="text-emerald-300">'Welcome back'</span>);</div>
+          <div>});</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Not Codegen Comparison Section -->
+    <section id="why" class="max-w-5xl mx-auto px-6 py-20">
+      <div class="text-center mb-14">
+        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">The problem with basic recorders</h2>
+        <p class="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
+          Tools like <code class="text-slate-300">playwright codegen</code> capture raw clicks, but their output usually creates brittle tests that fail on minor CSS updates.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Bad approach -->
+        <div class="p-6 rounded-2xl bg-rose-950/10 border border-rose-900/30 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-rose-400 text-sm font-semibold mb-4">
+              <i data-lucide="x-circle" class="w-4 h-4"></i>
+              <span>Standard Codegen Output</span>
+            </div>
+            <ul class="space-y-3 text-xs sm:text-sm text-slate-400">
+              <li class="flex items-start gap-2">
+                <span class="text-rose-400 mt-1">•</span>
+                <span>Produces fragile CSS paths like <code class="text-slate-300 text-xs">div > div:nth-child(3) > button</code>.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-rose-400 mt-1">•</span>
+                <span>Generates zero assertions. It records clicks, but never checks if an alert or toast appeared.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-rose-400 mt-1">•</span>
+                <span>Produces noisy, non-atomic events when users type quickly.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-6 pt-4 border-t border-rose-900/20 text-xs font-mono text-rose-300/80">
+            // Fragile: breaks on minor UI refactor
+          </div>
+        </div>
+
+        <!-- clickspec approach -->
+        <div class="p-6 rounded-2xl bg-sky-950/10 border border-sky-800/40 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-2 text-sky-400 text-sm font-semibold mb-4">
+              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+              <span>clickspec Output</span>
+            </div>
+            <ul class="space-y-3 text-xs sm:text-sm text-slate-400">
+              <li class="flex items-start gap-2">
+                <span class="text-sky-400 mt-1">•</span>
+                <span>Prioritizes accessible roles (<code class="text-slate-300 text-xs">getByRole</code>, <code class="text-slate-300 text-xs">getByLabel</code>, <code class="text-slate-300 text-xs">getByTestId</code>).</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-sky-400 mt-1">•</span>
+                <span>Watches DOM mutations and injects smart <code class="text-slate-300 text-xs">expect(...)</code> assertions automatically.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-sky-400 mt-1">•</span>
+                <span>Debounces keystrokes into single atomic <code class="text-slate-300 text-xs">fill()</code> commands.</span>
+              </li>
+            </ul>
+          </div>
+          <div class="mt-6 pt-4 border-t border-sky-800/30 text-xs font-mono text-sky-300/80">
+            // Resilient: survives layout updates
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture & Features Bento -->
+    <section id="features" class="max-w-5xl mx-auto px-6 py-12">
+      <div class="text-center mb-14">
+        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Built for production test suites</h2>
+        <p class="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
+          Four foundational pillars that make the synthesized code clean, stable, and ready to check in to Git.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <!-- Card 1 -->
+        <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition">
+          <div class="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-4">
+            <i data-lucide="target" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2">Semantic Locators</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Prioritizes user-facing accessibility semantics. Strict zero-CSS-path rule ensures selectors do not break when styles change.
+          </p>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
+            <i data-lucide="eye" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2">Smart Assertion Hook</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Captures DOM mutation signals after every significant user action, automatically asserting toast visibility, dialog openings, and redirects.
+          </p>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-4">
+            <i data-lucide="zap" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2">Event Normalization</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Eliminates rapid typing noise and accidental double-clicks before passing session context to the model, reducing token costs by over 70%.
+          </p>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
+            <i data-lucide="cpu" class="w-5 h-5"></i>
+          </div>
+          <h3 class="text-base font-semibold text-white mb-2">Dual Model Backend</h3>
+          <p class="text-sm text-slate-400 leading-relaxed">
+            Native support for Google Gemini 3.8 Flash via <code class="text-xs text-slate-300">@google/genai</code>, with seamless fallback to OpenAI, Groq, or local Ollama instances.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quickstart Section -->
+    <section id="quickstart" class="max-w-5xl mx-auto px-6 py-20">
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-8 sm:p-12 text-center">
+        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Ready to try clickspec?</h2>
+        <p class="mt-3 text-sm text-slate-400 max-w-lg mx-auto">
+          No complicated setup or account needed. Just open your terminal and point it at any web page.
+        </p>
+
+        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-black border border-slate-800 font-mono text-xs sm:text-sm text-slate-300">
+            <span class="text-sky-400 select-none">$</span>
+            <span>npx clickspec https://example.com</span>
+          </div>
+
+          <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-medium bg-slate-800 text-white hover:bg-slate-700 transition">
+            <i data-lucide="github" class="w-4 h-4"></i>
+            <span>GitHub Repository</span>
+          </a>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-[#090d16] py-10 relative z-10 text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-slate-300">clickspec</span>
+        <span>•</span>
+        <span>Open Source under MIT License</span>
+      </div>
+      <div>
+        <span>Created by <a href="https://github.com/fiizam" target="_blank" rel="noreferrer" class="text-slate-400 hover:text-white transition">fiizam</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Clipboard copy functionality
+    function copyCliCommand() {
+      const cmdText = document.getElementById('cli-cmd').innerText;
+      navigator.clipboard.writeText(cmdText).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>';
+        lucide.createIcons();
+        setTimeout(() => {
+          btn.innerHTML = '<i data-lucide="copy" class="w-4 h-4"></i>';
+          lucide.createIcons();
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>
