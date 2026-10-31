@@ -1,0 +1,45 @@
+{
+  "name": "clickspec",
+  "version": "1.0.0",
+  "description": "AI-Powered E2E Playwright Test Generator CLI",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "clickspec": "./bin/clickspec.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "tsx --test test/**/*.test.ts",
+    "test:unit": "tsx --test test/unit.test.ts"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "testing",
+    "test-generator",
+    "ai",
+    "gemini",
+    "developer-tools",
+    "automation"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@clack/prompts": "^0.9.1",
+    "@google/genai": "^2.32.0",
+    "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
+    "openai": "^4.86.1",
+    "picocolors": "^1.1.1",
+    "playwright": "^1.51.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.0",
+    "@types/node": "^22.13.10",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.2"
+  }
+}
