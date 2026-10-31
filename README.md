@@ -1,131 +1,110 @@
-# clickspec ⚡
+# clickspec
 
-> **AI-Powered E2E Playwright Test Generator CLI**  
-> Record live browser interactions and DOM mutations, and let AI synthesize resilient, clean, and production-grade Playwright specs (`.spec.ts`) with smart assertions.
+CLI tool that records browser interactions and generates maintainable Playwright E2E tests with automatic assertions.
 
-[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8%2B-blue.svg)](https://www.typescriptlang.org/)
-[![Playwright](https://img.shields.io/badge/Playwright-1.51%2B-orange.svg)](https://playwright.dev/)
-[![Gemini](https://img.shields.io/badge/AI-Google%20Gemini%20API-purple.svg)](https://aistudio.google.com/)
-
----
-
-## 🌟 Highlights
-
-- **🎯 Zero Fragile Selectors**: Prioritizes user-facing accessibility locators (`page.getByRole()`, `page.getByLabel()`, `page.getByPlaceholder()`, `page.getByText()`). Forbids brittle CSS paths like `div > div:nth-child(3)`.
-- **🧠 Smart Assertion Hooks**: Captures real-time DOM mutations following user actions (e.g. form submissions, button clicks) to assert visibility of toast alerts, headings, modals, and URL transitions.
-- **⚡ Event Debouncing & Normalization**: Compresses rapid typing noise into single atomic `page.fill()` actions, deduplicating accidental double clicks and redundant navigations.
-- **🤖 Dual AI Engine**: Native support for **Google Gemini API** (`@google/genai`) as primary with seamless fallback to **OpenAI** (`gpt-4o-mini`, etc.).
-- **✨ Polished Terminal UX**: Interactive terminal prompts powered by `@clack/prompts` and `picocolors`.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-2e7d32.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8%2B-3178c6.svg)](https://www.typescriptlang.org/)
+[![Playwright](https://img.shields.io/badge/Playwright-1.51%2B-45ba4b.svg)](https://playwright.dev/)
 
 ---
 
-## 🏗 Architecture
+## Why not just use `playwright codegen`?
 
-```
-C:\Users\Admin\Documents\clickspec
-├── package.json
-├── tsconfig.json
-├── .env.example
-├── .gitignore
-├── README.md
-├── bin/
-│   └── clickspec.js          # Executable CLI wrapper (#!/usr/bin/env node)
-└── src/
-    ├── index.ts              # Interactive terminal UX using @clack/prompts
-    ├── config.ts             # Environment variable validation & defaults
-    ├── types.ts              # Shared interfaces (RecordedEvent, TestSynthesisResult)
-    ├── core/
-    │   ├── browser.ts        # Browser launch, context, and page setup
-    │   ├── recorder.ts       # Client-side event interceptor & DOM state capture
-    │   └── normalizer.ts     # Event deduplication & context compression
-    ├── ai/
-    │   ├── client.ts         # AI client initializer (@google/genai)
-    │   ├── prompt.ts         # System & user prompt templates for test generation
-    │   └── synthesizer.ts    # Orchestrates raw events -> generated Playwright script
-    └── utils/
-        ├── logger.ts         # Formatted terminal UI helpers
-        └── formatter.ts      # Code sanitation (strips markdown fences, verifies syntax)
-```
+Playwright includes a built-in recorder, but the scripts it outputs usually require manual refactoring before they can be committed to a production test suite:
 
-### Pipeline Flow
+- **Fragile selectors:** Defaults to deep DOM paths (`div > div:nth-child(2) > button`) or arbitrary CSS classes that break on the next styling change.
+- **Zero assertions:** It records what you clicked, but never verifies whether the page actually responded correctly.
+- **Event noise:** Rapid keystrokes and double-clicks produce cluttered, non-atomic test code.
 
-```mermaid
-flowchart TD
-    A["Start clickspec CLI"] --> B["Capture Target URL & Config"]
-    B --> C["Launch Non-Headless Chromium"]
-    C --> D["Inject in-page Observer (recorder.ts)"]
-    D --> E["User Interacts: Clicks, Inputs, Navigations"]
-    E --> F["Smart Assertion Hook detects DOM mutations"]
-    F --> G["Browser closed or Enter pressed"]
-    G --> H["Normalize & Compress Events (normalizer.ts)"]
-    H --> I["AI Synthesis via @google/genai (synthesizer.ts)"]
-    I --> J["Sanitize & Format (.spec.ts)"]
-    J --> K["Write to tests/flow.spec.ts"]
-    K --> L["Run: npx playwright test --headed"]
+`clickspec` intercepts both user events and the resulting DOM mutations, normalizes the event stream, and uses an LLM to generate tests that follow current testing best practices:
+
+- Uses accessibility-first locators (`getByRole`, `getByLabel`, `getByTestId`).
+- Watches for DOM changes (toasts, modals, URL transitions, alert banners) and generates meaningful `expect(...)` assertions.
+- Debounces keystrokes into clean `fill()` actions.
+
+---
+
+## Generated Test Example
+
+Here is a typical test generated after recording a login interaction:
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test('User authentication flow', async ({ page }) => {
+  await page.goto('https://app.example.com/login');
+
+  await page.getByLabel('Email address').fill('user@example.com');
+  await page.getByLabel('Password').fill('secret123');
+  await page.getByRole('button', { name: 'Sign in' }).click();
+
+  // Inferred automatically from post-click DOM mutation & URL transition
+  await expect(page).toHaveURL(/.*dashboard/);
+  await expect(page.getByRole('alert')).toContainText('Login successful');
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+});
 ```
 
 ---
 
-## 🚀 Quick Start
+## Getting Started
 
-### 1. Installation
+### Prerequisites
+
+- Node.js 18 or newer
+- An API key for **Google Gemini** (recommended, free tier available at [Google AI Studio](https://aistudio.google.com/)) or **OpenAI**.
+
+### Installation
 
 ```bash
-git clone <repo-url> clickspec
+git clone https://github.com/fiizam/clickspec.git
 cd clickspec
 npm install
+npm run build
 ```
 
-### 2. Configure Environment
+### Configuration
 
-Copy `.env.example` to `.env` and set your API key:
+Copy the example environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env`:
+Add your API key to `.env`:
+
 ```env
-# Gemini API Key (Recommended) - https://aistudio.google.com/
+# Gemini API Key (Default)
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Optional: Fallback to OpenAI
-# OPENAI_API_KEY=your_openai_api_key_here
-```
+# Optional: Override model (defaults to gemini-3.8-flash)
+# CLICK_SPEC_MODEL=gemini-3.8-flash
 
-### 3. Build & Run
-
-```bash
-# Build TypeScript
-npm run build
-
-# Start interactive CLI
-npm start
-
-# Or in development mode with tsx
-npm run dev
+# Optional: Use OpenAI or compatible providers (Groq, DeepSeek, Ollama)
+# OPENAI_API_KEY=your_openai_key
+# OPENAI_BASE_URL=https://api.groq.com/openai/v1
 ```
 
 ---
 
-## 💻 CLI Usage
+## Usage
 
 ### Interactive Mode
 
-Simply run `clickspec` without arguments to launch the guided prompt:
+Run the CLI with a target URL:
 
 ```bash
-npm run dev
+npm run dev -- https://example.com
 ```
 
-1. Enter target URL: (e.g. `http://localhost:3000` or `https://example.com`)
-2. Specify output path: (defaults to `./tests/flow.spec.ts`)
-3. A browser opens. Click, type, and navigate through your workflow.
-4. When finished, **close the browser window** or **press Enter** in the terminal.
-5. `clickspec` synthesizes your clean Playwright test file.
+1. Confirm or adjust the output file path (default: `./tests/flow.spec.ts`).
+2. A Chromium window opens at the target URL.
+3. Interact with the page (click buttons, fill out forms, navigate links).
+4. When finished, close the browser window or press `Enter` in the terminal.
+5. The generated test script is formatted and saved to disk.
 
-### CLI Flags & Arguments
+### CLI Options
 
 ```bash
 clickspec [url] [options]
@@ -133,41 +112,60 @@ clickspec [url] [options]
 
 | Option | Shorthand | Description | Default |
 |--------|-----------|-------------|---------|
-| `url` | - | Target URL to record | Interactive prompt |
-| `--output <path>` | `-o` | Output file path for generated spec | `./tests/flow.spec.ts` |
+| `url` | - | Target URL to record | Prompts if omitted |
+| `--output <path>` | `-o` | Destination path for the generated spec | `./tests/flow.spec.ts` |
 | `--model <name>` | `-m` | AI model override | `gemini-3.8-flash` |
-| `--title <title>` | - | Custom test title | Dynamic based on URL |
-| `--headless` | - | Run browser in headless mode | `false` |
-| `--debug` | - | Print verbose debug logs | `false` |
-| `--help` | `-h` | Show help information | - |
+| `--title <title>` | - | Explicit test case title | Inferred from journey |
+| `--headless` | - | Run browser without UI (useful for CI scripts) | `false` |
+| `--debug` | - | Output detailed event logs to terminal | `false` |
+| `--help` | `-h` | Display help screen | - |
 
-#### Examples:
+#### Examples
 
 ```bash
-# Record directly against a local dev server
-npm run dev -- http://localhost:3000 -o ./tests/login.spec.ts
+# Record against a local dev server
+npm run dev -- http://localhost:3000 -o ./tests/checkout.spec.ts
 
-# Specify custom model and test title
-npm run dev -- https://my-app.com --title "User Checkout Flow" -m gemini-3.8-flash
+# Set a custom test title
+npm run dev -- https://my-app.com --title "User Registration Journey"
 ```
 
 ---
 
-## 🧪 Running the Generated Playwright Spec
+## Running Generated Tests
 
-After generating the test, execute it directly with Playwright:
+Execute the generated test file using the Playwright test runner:
 
 ```bash
-# Run headed to watch execution
-npx playwright test ./tests/flow.spec.ts --headed
+# Run headed to visually observe execution
+npx playwright test tests/flow.spec.ts --headed
 
-# View the Playwright HTML report
+# Open the HTML test report
 npx playwright show-report
 ```
 
 ---
 
-## 🛡 License
+## How It Works
 
-MIT
+```mermaid
+flowchart TD
+    A["Launch target URL in Chromium"] --> B["Inject in-page observer"]
+    B --> C["Capture clicks, inputs, navigations & DOM mutations"]
+    C --> D["Browser closes / Enter pressed"]
+    D --> E["Event normalizer debounces & deduplicates actions"]
+    E --> F["LLM synthesizes Playwright test with semantic locators"]
+    F --> G["Code formatter validates & strips markdown fences"]
+    G --> H["Write executable .spec.ts to disk"]
+```
 
+1. **In-Page Observer (`src/core/recorder.ts`):** Injected via `page.addInitScript()`. Captures element tag, accessible role, labels, test IDs, and text content without altering application behavior. Also tracks DOM mutations (alerts, modals, toasts) following click actions.
+2. **Normalizer (`src/core/normalizer.ts`):** Filters accidental double-clicks, debounces rapid keystrokes into single input updates, and structures the interaction timeline.
+3. **Synthesis Engine (`src/ai/synthesizer.ts`):** Formats the interaction data into an AST-aware prompt. The LLM constructs standard Playwright code following the Arrange-Act-Assert pattern.
+4. **Formatter (`src/utils/formatter.ts`):** Cleans the output, validates imports, and writes the test to the requested path.
+
+---
+
+## License
+
+MIT License. See [LICENSE](LICENSE) for details.
