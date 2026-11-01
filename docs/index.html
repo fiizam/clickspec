@@ -3,32 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>clickspec — AI-Powered Playwright Test Generator</title>
-  <meta name="description" content="CLI tool that records browser interactions and generates maintainable Playwright E2E tests with automated assertions.">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2338bdf8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m12 19-7-7 7-7'/><path d='M19 12H5'/></svg>">
+  <title>clickspec — Turn Browser Clicks Into Resilient Playwright Tests</title>
+  <meta name="description" content="AI-Powered E2E Playwright Test Generator CLI. Record real browser interactions and DOM mutations. Let AI synthesize production-grade specs with zero fragile CSS selectors and automated assertions.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ea580c'><path d='M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z'/></svg>">
 
-  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
-      darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'monospace'],
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
           },
           colors: {
             brand: {
-              50: '#f0f9ff',
-              400: '#38bdf8',
-              500: '#0ea5e9',
-              600: '#0284c7',
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+              800: '#9a3412',
+            },
+            surface: {
+              base: '#fbfaf7',
+              card: '#ffffff',
             }
           }
         }
@@ -40,310 +48,897 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <style>
-    /* Subtle dot grid pattern */
-    .bg-grid-pattern {
-      background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
-      background-size: 24px 24px;
+    body {
+      background-color: #fbfaf7;
+      color: #111827;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     }
+
     ::selection {
-      background-color: #38bdf8;
-      color: #090d16;
+      background-color: #ea580c;
+      color: #ffffff;
+    }
+
+    /* Ambient Hero Glow Arch matching Dribbble reference */
+    .hero-arch {
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1000px;
+      height: 600px;
+      background: radial-gradient(ellipse 65% 55% at 50% 25%, rgba(249, 115, 22, 0.18) 0%, rgba(254, 215, 170, 0.12) 40%, rgba(251, 250, 247, 0) 75%);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .hero-arch-ring {
+      position: absolute;
+      top: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 860px;
+      height: 480px;
+      border: 1px solid rgba(234, 88, 12, 0.14);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Medallion Concentric Glow & Pulse */
+    .medallion-outer-glow {
+      box-shadow: 0 0 50px -5px rgba(234, 88, 12, 0.35), 0 0 20px -2px rgba(249, 115, 22, 0.25);
+    }
+
+    .medallion-inner-glow {
+      box-shadow: inset 0 0 25px rgba(234, 88, 12, 0.2), 0 8px 20px rgba(234, 88, 12, 0.15);
+    }
+
+    /* Ambient Hero Radial Halo Arch animation */
+    @keyframes archAura {
+      0%, 100% { opacity: 0.85; transform: translateX(-50%) scale(1); }
+      50% { opacity: 1; transform: translateX(-50%) scale(1.03); }
+    }
+    .hero-arch {
+      animation: archAura 8s ease-in-out infinite;
+    }
+
+    /* Smooth Floating with Staggered Easing */
+    @keyframes float1 {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-7px); }
+    }
+    @keyframes float2 {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    @keyframes float3 {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-6px); }
+    }
+
+    .animate-float-1 { animation: float1 5.2s ease-in-out infinite; }
+    .animate-float-2 { animation: float2 6.5s ease-in-out infinite 0.7s; }
+    .animate-float-3 { animation: float3 5.8s ease-in-out infinite 1.4s; }
+
+    /* Medallion Breathing Glow */
+    @keyframes medallionBreathe {
+      0%, 100% {
+        box-shadow: 0 0 45px -5px rgba(234, 88, 12, 0.35), 0 0 20px -2px rgba(249, 115, 22, 0.25);
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 70px 5px rgba(234, 88, 12, 0.5), 0 0 32px 2px rgba(249, 115, 22, 0.35);
+        transform: scale(1.025);
+      }
+    }
+    .animate-medallion {
+      animation: medallionBreathe 4.5s ease-in-out infinite;
+    }
+
+    /* Slow Orbit Ring Rotation */
+    @keyframes slowOrbit {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-orbit {
+      animation: slowOrbit 32s linear infinite;
+    }
+
+    /* Connecting Laser Beam with Traveling Energy */
+    .laser-line-left {
+      background: linear-gradient(90deg, rgba(234, 88, 12, 0.2) 0%, rgba(234, 88, 12, 0.95) 100%);
+      box-shadow: 0 0 10px rgba(234, 88, 12, 0.7);
+    }
+
+    .laser-line-right {
+      background: linear-gradient(90deg, rgba(234, 88, 12, 0.95) 0%, rgba(234, 88, 12, 0.2) 100%);
+      box-shadow: 0 0 10px rgba(234, 88, 12, 0.7);
+    }
+
+    /* Traveling Pulse Particle Dots on Laser Beams */
+    @keyframes travelDotLeft {
+      0% { left: 0%; opacity: 0; transform: translateY(-50%) scale(0.6); }
+      20% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+      80% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+      100% { left: 100%; opacity: 0; transform: translateY(-50%) scale(0.6); }
+    }
+
+    @keyframes travelDotRight {
+      0% { left: 0%; opacity: 0; transform: translateY(-50%) scale(0.6); }
+      20% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+      80% { opacity: 1; transform: translateY(-50%) scale(1.1); }
+      100% { left: 100%; opacity: 0; transform: translateY(-50%) scale(0.6); }
+    }
+
+    .animate-dot-left {
+      animation: travelDotLeft 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    .animate-dot-right {
+      animation: travelDotRight 2.2s cubic-bezier(0.4, 0, 0.2, 1) infinite 0.4s;
+    }
+
+    /* Smooth Micro-Interactions */
+    .smooth-lift {
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .smooth-lift:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 30px -8px rgba(234, 88, 12, 0.12);
+    }
+
+    /* Scroll reveal transitions */
+    .reveal-item {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.65s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal-item.is-visible {
+      opacity: 1;
+      transform: translateY(0);
     }
   </style>
 </head>
-<body class="bg-[#0b0f19] text-slate-200 font-sans antialiased selection:bg-sky-400 selection:text-slate-950 min-h-screen flex flex-col justify-between">
+<body class="bg-[#fbfaf7] text-stone-900 font-sans antialiased min-h-screen flex flex-col justify-between relative overflow-x-hidden">
 
-  <!-- Background decorative light glow -->
-  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
-    <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[720px] h-[400px] bg-sky-500/10 blur-[130px] rounded-full"></div>
-    <div class="absolute top-[40%] right-[-100px] w-[500px] h-[350px] bg-indigo-500/10 blur-[140px] rounded-full"></div>
-  </div>
+  <!-- Ambient Hero Radial Halo and Arch -->
+  <div class="hero-arch"></div>
+  <div class="hero-arch-ring"></div>
 
-  <div class="relative z-10">
-    <!-- Navbar -->
-    <header class="border-b border-slate-800/80 bg-[#0b0f19]/80 backdrop-blur-md sticky top-0 z-50">
-      <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-        <a href="#" class="flex items-center gap-2.5 group">
-          <div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-400/30 flex items-center justify-center text-sky-400 group-hover:border-sky-400 transition">
-            <i data-lucide="play" class="w-4 h-4 fill-sky-400"></i>
+  <!-- Main Content Wrapper -->
+  <div class="relative z-10 w-full">
+
+    <!-- FLOATING PILL NAVBAR -->
+    <header class="max-w-4xl mx-auto px-4 pt-4 sm:pt-6 sticky top-0 z-50">
+      <div class="bg-white/90 backdrop-blur-md border border-stone-200/90 rounded-full px-4 sm:px-6 py-2.5 flex items-center justify-between shadow-[0_2px_15px_-3px_rgba(0,0,0,0.06),0_10px_20px_-2px_rgba(0,0,0,0.02)] transition-all">
+        <!-- Logo -->
+        <a href="#" class="flex items-center gap-2 group">
+          <div class="w-7 h-7 rounded-full bg-orange-100 flex items-center justify-center text-[#ea580c] group-hover:scale-105 transition-transform">
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+            </svg>
           </div>
-          <span class="font-bold tracking-tight text-white text-lg">clickspec</span>
+          <span class="font-bold text-lg tracking-tight text-stone-900">clickspec</span>
         </a>
 
-        <nav class="hidden md:flex items-center gap-8 text-sm text-slate-400">
-          <a href="#why" class="hover:text-white transition">Why Not Codegen</a>
-          <a href="#demo" class="hover:text-white transition">Interactive Demo</a>
-          <a href="#features" class="hover:text-white transition">Architecture</a>
-          <a href="#quickstart" class="hover:text-white transition">Quickstart</a>
+        <!-- Center Links (Desktop) -->
+        <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-stone-600">
+          <a href="#how-it-works" class="hover:text-stone-950 transition">How it Works</a>
+          <a href="#showcase" class="hover:text-stone-950 transition">Showcase</a>
+          <a href="#architecture" class="hover:text-stone-950 transition">Architecture</a>
+          <a href="#quickstart" class="hover:text-stone-950 transition">Docs</a>
         </nav>
 
-        <div class="flex items-center gap-3">
-          <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium bg-slate-900 border border-slate-700/80 text-slate-200 hover:text-white hover:border-slate-600 transition shadow-sm">
-            <i data-lucide="github" class="w-3.5 h-3.5"></i>
-            <span>Star on GitHub</span>
+        <!-- Right Action Pill -->
+        <div class="flex items-center gap-2 sm:gap-4">
+          <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="text-xs sm:text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1.5 transition px-2 py-1">
+            <i data-lucide="github" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">GitHub</span>
+          </a>
+          <a href="#quickstart" class="bg-[#111827] text-white hover:bg-black text-xs sm:text-sm font-medium rounded-full px-4 sm:px-5 py-2 transition shadow-sm hover:shadow inline-flex items-center gap-1.5 group">
+            <span>Get Started</span>
+            <span class="group-hover:translate-x-0.5 transition-transform">→</span>
           </a>
         </div>
       </div>
     </header>
 
-    <!-- Hero Section -->
-    <section class="max-w-5xl mx-auto px-6 pt-20 pb-16 text-center">
-      <!-- Badge -->
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-800 text-xs text-slate-400 mb-8 shadow-inner">
-        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-        <span>v1.0.0 is live</span>
-        <span class="text-slate-600">•</span>
-        <span class="text-slate-300">Zero-config Playwright generator</span>
-      </div>
+    <!-- HERO SECTION -->
+    <section class="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-20 pb-12 sm:pb-20 text-center">
+      <!-- Eyebrow Tag -->
 
-      <!-- Main Headline -->
-      <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-[1.12]">
-        Turn real browser clicks into maintainable Playwright tests.
+      <!-- Main Headline (H1) -->
+      <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight text-stone-900 max-w-4xl mx-auto leading-[1.12]">
+        Turn Browser Clicks Into <br class="hidden sm:inline" />
+        <span class="relative whitespace-nowrap">
+          <span class="relative z-10 text-stone-900">Resilient Playwright Tests</span>
+          <span class="absolute bottom-1 left-0 w-full h-3 bg-orange-200/50 -z-0 rounded-sm"></span>
+        </span>
       </h1>
 
       <!-- Subheadline -->
-      <p class="mt-6 text-base sm:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
-        <span class="text-slate-200 font-medium">clickspec</span> records live user interactions, tracks DOM mutation signals, and uses AI to generate resilient tests with accessibility-first locators and automated assertions.
+      <p class="text-base sm:text-xl text-stone-600 max-w-2xl mx-auto mt-6 leading-relaxed font-normal">
+        Record real browser interactions and DOM mutations. Let AI synthesize production-grade specs with zero fragile CSS selectors and automated assertions.
       </p>
 
-      <!-- Terminal Command Copy Box -->
-      <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-        <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 font-mono text-sm shadow-xl w-full sm:w-auto">
-          <span class="text-sky-400 select-none">$</span>
-          <span id="cli-cmd" class="text-slate-200 select-all">npx clickspec https://example.com</span>
-          <button id="copy-btn" onclick="copyCliCommand()" class="ml-2 text-slate-400 hover:text-white transition p-1.5 rounded-md hover:bg-slate-800" title="Copy command">
-            <i data-lucide="copy" class="w-4 h-4"></i>
-          </button>
-        </div>
-
-        <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-white text-slate-950 hover:bg-slate-200 transition shadow-lg shadow-white/5">
-          <span>Read Documentation</span>
-          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+      <!-- Action Buttons (Pill CTAs) -->
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5 mt-8 sm:mt-10">
+        <a href="#showcase" class="w-full sm:w-auto bg-stone-100 hover:bg-stone-200/80 text-stone-800 border border-stone-200 rounded-full px-6 py-3 text-sm font-medium transition inline-flex items-center justify-center gap-2">
+          <i data-lucide="code-2" class="w-4 h-4 text-stone-600"></i>
+          <span>View Generated Code</span>
         </a>
+
+        <!-- Interactive Terminal Pill Button -->
+        <button id="copyCommandBtn" onclick="copyCliCommand()" class="w-full sm:w-auto bg-[#ea580c] hover:bg-[#c2410c] text-white font-medium rounded-full px-6 py-3 text-sm shadow-lg shadow-orange-500/20 transition inline-flex items-center justify-center gap-2.5 group cursor-pointer">
+          <span class="font-mono text-xs opacity-90">npx clickspec https://...</span>
+          <i data-lucide="copy" id="copyIcon" class="w-4 h-4 opacity-80 group-hover:opacity-100 transition"></i>
+          <span id="copyFeedback" class="hidden text-xs bg-white text-orange-700 px-2 py-0.5 rounded-full font-bold">Copied!</span>
+        </button>
       </div>
 
-      <p class="mt-3 text-xs text-slate-500">
-        Requires Node.js 18+ and a free Gemini or OpenAI API key.
-      </p>
+      <!-- Quick Social Proof / Stat -->
+      <div class="mt-8 flex items-center justify-center gap-6 text-xs text-stone-500">
+        <span class="inline-flex items-center gap-1.5">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>No CSS `div:nth-child` slop</span>
+        </span>
+        <span class="inline-flex items-center gap-1.5">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>Auto-assert toasts & URLs</span>
+        </span>
+        <span class="hidden sm:inline-flex items-center gap-1.5">
+          <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-emerald-600"></i>
+          <span>TypeScript strict mode</span>
+        </span>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- THE SIGNATURE VISUAL INTERACTION GRAPHIC (HERO CENTERPIECE) -->
+      <!-- Inspired directly by Dribbble Reference -->
+      <!-- ======================================================== -->
+      <div class="mt-14 sm:mt-20 relative max-w-4xl mx-auto">
+        <div class="bg-gradient-to-b from-white/80 to-white/40 border border-stone-200/80 rounded-3xl p-6 sm:p-12 shadow-[0_20px_60px_-15px_rgba(234,88,12,0.08)] backdrop-blur-sm relative overflow-hidden">
+
+          <!-- Background subtle circuit aura -->
+          <div class="absolute inset-0 bg-[radial-gradient(#ea580c_1px,transparent_1px)] [background-size:24px_24px] opacity-[0.04] pointer-events-none"></div>
+
+          <!-- Flex container for: Left Pills -> Center Medallion -> Right Output Cards -->
+          <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-2">
+
+            <!-- LEFT SIDE: User Interaction Flow (Inputs) -->
+            <div id="interactive-flow-container" class="w-full lg:w-72 flex flex-col items-center lg:items-end gap-3 order-2 lg:order-1">
+              <!-- Pill 0 -->
+              <div id="flow-pill-0" onclick="switchActiveFlow(0)" class="w-full sm:w-64 px-4 py-2.5 rounded-full bg-white/70 border border-stone-200/80 text-xs text-stone-500 font-medium text-center lg:text-right shadow-sm cursor-pointer smooth-lift animate-float-1 transition-all select-none hover:border-orange-300">
+                <span>Filling checkout payment form...</span>
+              </div>
+
+              <!-- Pill 1 (Active by default) -->
+              <div id="flow-pill-1" onclick="switchActiveFlow(1)" class="w-full sm:w-72 px-4 py-3 rounded-full bg-white border-2 border-orange-400 shadow-[0_10px_25px_-5px_rgba(234,88,12,0.18)] flex items-center justify-between gap-2.5 cursor-pointer smooth-lift animate-float-2 transition-all select-none">
+                <div class="flex items-center gap-2 overflow-hidden">
+                  <div class="w-5 h-5 rounded-full bg-orange-100 flex-shrink-0 flex items-center justify-center text-[#ea580c]">
+                    <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24">
+                      <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+                    </svg>
+                  </div>
+                  <span id="flow-title-1" class="text-xs sm:text-sm font-semibold text-stone-900 truncate">Click "Sign in" & check modal</span>
+                </div>
+                <span id="flow-badge-1" class="flex-shrink-0 text-[10px] font-mono uppercase bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full font-bold border border-orange-300">Captured</span>
+              </div>
+
+              <!-- Pill 2 -->
+              <div id="flow-pill-2" onclick="switchActiveFlow(2)" class="w-full sm:w-64 px-4 py-2.5 rounded-full bg-white/70 border border-stone-200/80 text-xs text-stone-500 font-medium text-center lg:text-right shadow-sm cursor-pointer smooth-lift animate-float-3 transition-all select-none hover:border-orange-300">
+                <span>Selecting dropdown option...</span>
+              </div>
+            </div>
+
+            <!-- CENTER ELEMENT: Glowing Multi-Ring Concentric Medallion -->
+            <div class="relative flex items-center justify-center order-1 lg:order-2 my-4 lg:my-0">
+              
+              <!-- Left Laser Beam (Desktop only) -->
+              <div class="hidden lg:block absolute right-[100%] top-1/2 -translate-y-1/2 w-16 h-[2px] laser-line-left pointer-events-none">
+                <div class="absolute top-1/2 w-2.5 h-2.5 rounded-full bg-[#ea580c] shadow-[0_0_12px_#ea580c] animate-dot-left"></div>
+              </div>
+
+              <!-- Outer Radiant Glow Aura with Ambient Rotation -->
+              <div class="w-44 h-44 sm:w-52 sm:h-52 rounded-full bg-gradient-to-tr from-orange-500/20 via-orange-400/30 to-amber-300/20 flex items-center justify-center p-3 medallion-outer-glow animate-medallion relative">
+                
+                <!-- Slow Rotating Subtle Orbit Dash Ring -->
+                <div class="absolute inset-[-10px] rounded-full border border-dashed border-orange-400/30 animate-orbit pointer-events-none"></div>
+
+                <!-- Concentric Copper/Orange Border Ring -->
+                <div class="w-full h-full rounded-full border-[3px] border-[#ea580c] p-2 flex items-center justify-center shadow-[inset_0_0_20px_rgba(234,88,12,0.3)] bg-gradient-to-b from-[#f97316] to-[#c2410c]">
+                  
+                  <!-- Inner Metallic / Porcelain Ring -->
+                  <div class="w-full h-full rounded-full bg-[#ffffff] p-3 flex items-center justify-center border-2 border-orange-300 medallion-inner-glow relative">
+                    
+                    <!-- Pulsing Accent Light -->
+                    <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-orange-100/60 to-transparent"></div>
+
+                    <!-- AI Brain / Microchip Centerpiece Artwork -->
+                    <div class="relative z-10 flex flex-col items-center justify-center text-center">
+                      <div class="w-16 h-16 sm:w-20 sm:h-20 relative flex items-center justify-center">
+                        <!-- Chip SVG -->
+                        <svg class="w-full h-full text-[#ea580c] drop-shadow-[0_4px_8px_rgba(234,88,12,0.3)]" viewBox="0 0 80 80" fill="none">
+                          <rect x="22" y="22" width="36" height="36" rx="8" fill="#fff7ed" stroke="#ea580c" stroke-width="2.5"/>
+                          <line x1="30" y1="12" x2="30" y2="22" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                          <circle cx="30" cy="10" r="2.5" fill="#ea580c"/>
+                          
+                          <line x1="50" y1="12" x2="50" y2="22" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                          <circle cx="50" cy="10" r="2.5" fill="#ea580c"/>
+
+                          <line x1="30" y1="58" x2="30" y2="68" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                          <circle cx="30" cy="70" r="2.5" fill="#ea580c"/>
+
+                          <line x1="50" y1="58" x2="50" y2="68" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                          <circle cx="50" cy="70" r="2.5" fill="#ea580c"/>
+
+                          <line x1="12" y1="30" x2="22" y2="30" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                          <circle cx="10" cy="30" r="2.5" fill="#ea580c"/>
+
+                          <line x1="12" y1="50" x2="22" y2="50" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                          <circle cx="10" cy="50" r="2.5" fill="#ea580c"/>
+
+                          <line x1="58" y1="30" x2="68" y2="30" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                          <circle cx="70" cy="30" r="2.5" fill="#ea580c"/>
+
+                          <line x1="58" y1="50" x2="68" y2="50" stroke="#f97316" stroke-width="2.5" stroke-linecap="round"/>
+                          <circle cx="70" cy="50" r="2.5" fill="#ea580c"/>
+
+                          <!-- Center Brain/AI Badge -->
+                          <circle cx="40" cy="40" r="12" fill="#ea580c"/>
+                          <text x="40" y="44" fill="#ffffff" font-family="'JetBrains Mono', monospace" font-size="10" font-weight="800" text-anchor="middle">AI</text>
+                        </svg>
+                      </div>
+                      <span class="text-[10px] font-bold text-stone-500 uppercase tracking-widest mt-1">Synthesis</span>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right Laser Beam (Desktop only) -->
+              <div class="hidden lg:block absolute left-[100%] top-1/2 -translate-y-1/2 w-16 h-[2px] laser-line-right pointer-events-none">
+                <div class="absolute top-1/2 w-2.5 h-2.5 rounded-full bg-[#ea580c] shadow-[0_0_12px_#ea580c] animate-dot-right"></div>
+              </div>
+
+            </div>
+
+            <!-- RIGHT SIDE: Output Benchmarks & Value -->
+            <div class="w-full lg:w-72 flex flex-col items-center lg:items-start gap-3 order-3">
+              <!-- Top Card: Zero Fragile Selectors -->
+              <div class="w-full sm:w-64 px-4 py-2 rounded-full bg-white/80 border border-stone-200 text-xs text-stone-600 font-medium flex items-center justify-between shadow-sm animate-float-3 smooth-lift">
+                <span id="out-tag-top">Zero Fragile Selectors</span>
+                <span id="out-badge-top" class="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full font-bold">Role & Label</span>
+              </div>
+
+              <!-- Center Active Prominent Card: Dynamic output -->
+              <div id="out-main-card" class="w-full sm:w-72 p-4 rounded-2xl bg-white border-2 border-stone-200/90 shadow-[0_12px_30px_-8px_rgba(0,0,0,0.08)] flex flex-col gap-1 transition-all animate-float-1 smooth-lift">
+                <div class="flex items-center justify-between">
+                  <span id="out-highlight" class="text-xs font-bold uppercase tracking-wider text-[#ea580c]">5x Faster Authoring</span>
+                  <div class="flex items-center gap-1 bg-stone-100 text-stone-700 px-2 py-0.5 rounded text-[10px] font-mono">
+                    <i data-lucide="shield-check" class="w-3 h-3 text-emerald-600"></i>
+                    <span id="out-subbadge">Playwright</span>
+                  </div>
+                </div>
+                <div id="out-title" class="text-base sm:text-lg font-extrabold text-stone-900 tracking-tight transition-all">
+                  100% Automated Assertions
+                </div>
+                <div id="out-desc" class="text-xs text-stone-500 font-normal transition-all">
+                  Inspects DOM state mutations for alerts, toasts & URLs
+                </div>
+              </div>
+
+              <!-- Bottom Card: 85% Token Reduction -->
+              <div class="w-full sm:w-64 px-4 py-2 rounded-full bg-white/80 border border-stone-200 text-xs text-stone-600 font-medium flex items-center justify-between shadow-sm animate-float-2 smooth-lift">
+                <span id="out-tag-bottom">85% Context Reduction</span>
+                <span id="out-badge-bottom" class="text-[10px] font-mono text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full font-bold">Debounced</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Metric Bar -->
+          <div class="mt-8 pt-6 border-t border-stone-200/60 flex flex-wrap items-center justify-around gap-4 text-center">
+            <div>
+              <div class="text-xl sm:text-2xl font-extrabold text-stone-900 font-mono">0ms</div>
+              <div class="text-xs text-stone-500">Config Setup Required</div>
+            </div>
+            <div class="h-8 w-px bg-stone-200 hidden sm:block"></div>
+            <div>
+              <div class="text-xl sm:text-2xl font-extrabold text-[#ea580c] font-mono">100%</div>
+              <div class="text-xs text-stone-500">User-Facing Locators</div>
+            </div>
+            <div class="h-8 w-px bg-stone-200 hidden sm:block"></div>
+            <div>
+              <div class="text-xl sm:text-2xl font-extrabold text-emerald-600 font-mono">TypeScript</div>
+              <div class="text-xs text-stone-500">Clean Typed `.spec.ts`</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </section>
 
-    <!-- Interactive Code / Demo Preview -->
-    <section id="demo" class="max-w-5xl mx-auto px-6 py-8">
-      <div class="rounded-2xl border border-slate-800 bg-[#0f172a]/70 backdrop-blur-xl shadow-2xl overflow-hidden">
+    <!-- ======================================================== -->
+    <!-- INTERACTIVE CODE SHOWCASE (Codegen vs clickspec) -->
+    <!-- ======================================================== -->
+    <section id="showcase" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+          Stop Debugging Broken Selectors
+        </h2>
+        <p class="text-stone-600 mt-3 text-base sm:text-lg">
+          Traditional codegen generates brittle DOM trees with zero assertions. <br class="hidden sm:inline">
+          <span class="font-semibold text-stone-900">clickspec</span> synthesizes maintainable, user-centric code.
+        </p>
+      </div>
+
+      <!-- Comparison Dual Pane Container -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
         
-        <!-- Window Titlebar -->
-        <div class="flex items-center justify-between px-4 py-3 border-b border-slate-800/80 bg-slate-900/60">
-          <div class="flex items-center gap-2">
-            <span class="w-3 h-3 rounded-full bg-rose-500/80"></span>
-            <span class="w-3 h-3 rounded-full bg-amber-500/80"></span>
-            <span class="w-3 h-3 rounded-full bg-emerald-500/80"></span>
-            <span class="ml-2 text-xs font-mono text-slate-400">clickspec output comparison</span>
+        <!-- Standard Codegen (Fragile) -->
+        <div class="bg-white border border-red-200/80 rounded-2xl p-6 shadow-sm flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1 bg-red-400"></div>
+          <div>
+            <div class="flex items-center justify-between pb-4 border-b border-stone-100">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+                <span class="font-bold text-sm text-stone-800">Standard Codegen Output</span>
+              </div>
+              <span class="text-[11px] font-mono font-semibold text-red-600 bg-red-50 px-2.5 py-0.5 rounded-full border border-red-200">
+                Fragile & Flaky
+              </span>
+            </div>
+
+            <div class="mt-4 font-mono text-xs text-stone-700 bg-stone-50 rounded-xl p-4 border border-stone-200/80 overflow-x-auto leading-relaxed">
+              <span class="text-stone-400">// ❌ Fragile CSS paths that break on layout changes</span><br>
+              await page.<span class="text-red-600 font-semibold">locator</span>(<span class="text-emerald-700">'div &gt; div:nth-child(3) &gt; input'</span>).fill(<span class="text-emerald-700">'user@test.com'</span>);<br>
+              await page.<span class="text-red-600 font-semibold">locator</span>(<span class="text-emerald-700">'.auth-input-v2__field_39x'</span>).fill(<span class="text-emerald-700">'secret123'</span>);<br>
+              await page.<span class="text-red-600 font-semibold">locator</span>(<span class="text-emerald-700">'xpath=//button[3]'</span>).click();<br><br>
+              <span class="text-stone-400">// ⚠️ ZERO assertions generated:</span><br>
+              <span class="text-stone-400">// Test silently passes even if login completely failed!</span>
+            </div>
           </div>
-          <div class="flex items-center gap-1.5 bg-slate-950 px-2 py-1 rounded-md border border-slate-800 text-[11px] font-mono text-slate-400">
-            <i data-lucide="check" class="w-3.5 h-3.5 text-emerald-400"></i>
-            <span>tests/flow.spec.ts</span>
+
+          <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-500">
+            <span>Result: 43% maintenance overhead</span>
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i>
           </div>
         </div>
 
-        <!-- Code Content -->
-        <div class="p-6 font-mono text-xs sm:text-sm overflow-x-auto leading-relaxed">
-          <div class="text-slate-500 select-none">// 1. Imports standard Playwright runner</div>
-          <div><span class="text-sky-400">import</span> { <span class="text-amber-300">test</span>, <span class="text-amber-300">expect</span> } <span class="text-sky-400">from</span> <span class="text-emerald-300">'@playwright/test'</span>;</div>
-          <br>
-          <div><span class="text-purple-400">test</span>(<span class="text-emerald-300">'User completes authentication flow'</span>, <span class="text-sky-400">async</span> ({ <span class="text-slate-200">page</span> }) => {</div>
-          <div class="pl-4 text-slate-500 select-none">// Initial target page navigation</div>
-          <div class="pl-4"><span class="text-sky-400">await</span> page.<span class="text-amber-300">goto</span>(<span class="text-emerald-300">'https://app.example.com/login'</span>);</div>
-          <br>
-          <div class="pl-4 text-slate-500 select-none">// Semantic locators (no fragile div &gt; div selectors)</div>
-          <div class="pl-4"><span class="text-sky-400">await</span> page.<span class="text-amber-300">getByLabel</span>(<span class="text-emerald-300">'Email address'</span>).<span class="text-amber-300">fill</span>(<span class="text-emerald-300">'alex@company.com'</span>);</div>
-          <div class="pl-4"><span class="text-sky-400">await</span> page.<span class="text-amber-300">getByLabel</span>(<span class="text-emerald-300">'Password'</span>).<span class="text-amber-300">fill</span>(<span class="text-emerald-300">'••••••••••••'</span>);</div>
-          <div class="pl-4"><span class="text-sky-400">await</span> page.<span class="text-amber-300">getByRole</span>(<span class="text-emerald-300">'button'</span>, { <span class="text-slate-300">name</span>: <span class="text-emerald-300">'Sign in'</span> }).<span class="text-amber-300">click</span>();</div>
-          <br>
-          <div class="pl-4 text-emerald-400/80 select-none">// Smart assertions inferred automatically from DOM mutations</div>
-          <div class="pl-4"><span class="text-sky-400">await</span> <span class="text-amber-300">expect</span>(page).<span class="text-amber-300">toHaveURL</span>(<span class="text-emerald-300">/.*dashboard/</span>);</div>
-          <div class="pl-4"><span class="text-sky-400">await</span> <span class="text-amber-300">expect</span>(page.<span class="text-amber-300">getByRole</span>(<span class="text-emerald-300">'heading'</span>, { <span class="text-slate-300">name</span>: <span class="text-emerald-300">'Overview'</span> })).<span class="text-amber-300">toBeVisible</span>();</div>
-          <div class="pl-4"><span class="text-sky-400">await</span> <span class="text-amber-300">expect</span>(page.<span class="text-amber-300">getByRole</span>(<span class="text-emerald-300">'status'</span>)).<span class="text-amber-300">toContainText</span>(<span class="text-emerald-300">'Welcome back'</span>);</div>
-          <div>});</div>
+        <!-- clickspec with AI (Resilient) -->
+        <div class="bg-white border-2 border-orange-300 rounded-2xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
+          <div class="absolute top-0 left-0 right-0 h-1.5 bg-[#ea580c]"></div>
+          <div>
+            <div class="flex items-center justify-between pb-4 border-b border-stone-100">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-[#ea580c]"></span>
+                <span class="font-bold text-sm text-stone-900">clickspec AI Synthesis</span>
+              </div>
+              <span class="text-[11px] font-mono font-semibold text-[#ea580c] bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
+                Resilient & Tested
+              </span>
+            </div>
+
+            <div class="mt-4 font-mono text-xs text-stone-800 bg-orange-50/30 rounded-xl p-4 border border-orange-100 overflow-x-auto leading-relaxed">
+              <span class="text-orange-700 font-semibold">import</span> { test, expect } <span class="text-orange-700 font-semibold">from</span> <span class="text-emerald-700">'@playwright/test'</span>;<br><br>
+              test(<span class="text-emerald-700">'User authenticates & verifies dashboard'</span>, <span class="text-orange-700 font-semibold">async</span> ({ page }) =&gt; {<br>
+              &nbsp;&nbsp;<span class="text-stone-400">// ✅ Accessible locators matching real user intent</span><br>
+              &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> page.<span class="text-blue-600 font-semibold">getByLabel</span>(<span class="text-emerald-700">'Email Address'</span>).fill(<span class="text-emerald-700">'user@test.com'</span>);<br>
+              &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> page.<span class="text-blue-600 font-semibold">getByPlaceholder</span>(<span class="text-emerald-700">'Enter password'</span>).fill(<span class="text-emerald-700">'secret123'</span>);<br>
+              &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> page.<span class="text-blue-600 font-semibold">getByRole</span>(<span class="text-emerald-700">'button'</span>, { name: <span class="text-emerald-700">'Sign In'</span> }).click();<br><br>
+              &nbsp;&nbsp;<span class="text-stone-400">// 🎯 Auto-synthesized smart assertions</span><br>
+              &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-purple-600 font-semibold">expect</span>(page).toHaveURL(<span class="text-emerald-700">/.*dashboard/</span>);<br>
+              &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-purple-600 font-semibold">expect</span>(page.getByRole(<span class="text-emerald-700">'heading'</span>, { name: <span class="text-emerald-700">'Welcome back'</span> })).toBeVisible();<br>
+              &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-purple-600 font-semibold">expect</span>(page.getByRole(<span class="text-emerald-700">'alert'</span>)).toContainText(<span class="text-emerald-700">'Login successful'</span>);<br>
+              });
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-600 font-medium">
+            <span>Result: Zero test flakes on refactors</span>
+            <i data-lucide="sparkles" class="w-4 h-4 text-[#ea580c]"></i>
+          </div>
         </div>
+
       </div>
     </section>
 
-    <!-- Why Not Codegen Comparison Section -->
-    <section id="why" class="max-w-5xl mx-auto px-6 py-20">
-      <div class="text-center mb-14">
-        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">The problem with basic recorders</h2>
-        <p class="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
-          Tools like <code class="text-slate-300">playwright codegen</code> capture raw clicks, but their output usually creates brittle tests that fail on minor CSS updates.
+    <!-- ======================================================== -->
+    <!-- CORE PILLARS (Bento Grid) -->
+    <!-- ======================================================== -->
+    <section id="features" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+          Engineered for Clean Code Quality
+        </h2>
+        <p class="text-stone-600 mt-3 text-base sm:text-lg">
+          No boilerplate fluff. Built with strict principles from the ground up.
         </p>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Bad approach -->
-        <div class="p-6 rounded-2xl bg-rose-950/10 border border-rose-900/30 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center gap-2 text-rose-400 text-sm font-semibold mb-4">
-              <i data-lucide="x-circle" class="w-4 h-4"></i>
-              <span>Standard Codegen Output</span>
-            </div>
-            <ul class="space-y-3 text-xs sm:text-sm text-slate-400">
-              <li class="flex items-start gap-2">
-                <span class="text-rose-400 mt-1">•</span>
-                <span>Produces fragile CSS paths like <code class="text-slate-300 text-xs">div > div:nth-child(3) > button</code>.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-rose-400 mt-1">•</span>
-                <span>Generates zero assertions. It records clicks, but never checks if an alert or toast appeared.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-rose-400 mt-1">•</span>
-                <span>Produces noisy, non-atomic events when users type quickly.</span>
-              </li>
-            </ul>
-          </div>
-          <div class="mt-6 pt-4 border-t border-rose-900/20 text-xs font-mono text-rose-300/80">
-            // Fragile: breaks on minor UI refactor
-          </div>
-        </div>
-
-        <!-- clickspec approach -->
-        <div class="p-6 rounded-2xl bg-sky-950/10 border border-sky-800/40 flex flex-col justify-between">
-          <div>
-            <div class="flex items-center gap-2 text-sky-400 text-sm font-semibold mb-4">
-              <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-              <span>clickspec Output</span>
-            </div>
-            <ul class="space-y-3 text-xs sm:text-sm text-slate-400">
-              <li class="flex items-start gap-2">
-                <span class="text-sky-400 mt-1">•</span>
-                <span>Prioritizes accessible roles (<code class="text-slate-300 text-xs">getByRole</code>, <code class="text-slate-300 text-xs">getByLabel</code>, <code class="text-slate-300 text-xs">getByTestId</code>).</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-sky-400 mt-1">•</span>
-                <span>Watches DOM mutations and injects smart <code class="text-slate-300 text-xs">expect(...)</code> assertions automatically.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-sky-400 mt-1">•</span>
-                <span>Debounces keystrokes into single atomic <code class="text-slate-300 text-xs">fill()</code> commands.</span>
-              </li>
-            </ul>
-          </div>
-          <div class="mt-6 pt-4 border-t border-sky-800/30 text-xs font-mono text-sky-300/80">
-            // Resilient: survives layout updates
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Architecture & Features Bento -->
-    <section id="features" class="max-w-5xl mx-auto px-6 py-12">
-      <div class="text-center mb-14">
-        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Built for production test suites</h2>
-        <p class="mt-3 text-sm text-slate-400 max-w-xl mx-auto">
-          Four foundational pillars that make the synthesized code clean, stable, and ready to check in to Git.
-        </p>
-      </div>
-
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <!-- Card 1 -->
-        <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition">
-          <div class="w-10 h-10 rounded-xl bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-4">
+        
+        <!-- Pillar 1 -->
+        <div class="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 hover:border-orange-300 transition shadow-sm hover:shadow group">
+          <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#ea580c] mb-5 group-hover:scale-105 transition-transform">
             <i data-lucide="target" class="w-5 h-5"></i>
           </div>
-          <h3 class="text-base font-semibold text-white mb-2">Semantic Locators</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">
-            Prioritizes user-facing accessibility semantics. Strict zero-CSS-path rule ensures selectors do not break when styles change.
+          <h3 class="text-xl font-bold text-stone-900 tracking-tight">Accessibility-First Locators</h3>
+          <p class="text-stone-600 mt-2.5 text-sm leading-relaxed">
+            Prioritizes user-facing semantic queries like <code class="font-mono text-xs bg-stone-100 px-1.5 py-0.5 rounded text-stone-800">getByRole</code>, <code class="font-mono text-xs bg-stone-100 px-1.5 py-0.5 rounded text-stone-800">getByLabel</code>, and <code class="font-mono text-xs bg-stone-100 px-1.5 py-0.5 rounded text-stone-800">getByPlaceholder</code>. Strictly forbids fragile hierarchy chains.
           </p>
         </div>
 
-        <!-- Card 2 -->
-        <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition">
-          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-4">
-            <i data-lucide="eye" class="w-5 h-5"></i>
+        <!-- Pillar 2 -->
+        <div class="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 hover:border-orange-300 transition shadow-sm hover:shadow group">
+          <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#ea580c] mb-5 group-hover:scale-105 transition-transform">
+            <i data-lucide="bell-ring" class="w-5 h-5"></i>
           </div>
-          <h3 class="text-base font-semibold text-white mb-2">Smart Assertion Hook</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">
-            Captures DOM mutation signals after every significant user action, automatically asserting toast visibility, dialog openings, and redirects.
+          <h3 class="text-xl font-bold text-stone-900 tracking-tight">Smart Mutation Hooks</h3>
+          <p class="text-stone-600 mt-2.5 text-sm leading-relaxed">
+            When you submit forms or trigger state changes, our client-side observer watches for toasts, dialogs, error banners, and URL transitions to generate automatic assertions.
           </p>
         </div>
 
-        <!-- Card 3 -->
-        <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition">
-          <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 mb-4">
-            <i data-lucide="zap" class="w-5 h-5"></i>
+        <!-- Pillar 3 -->
+        <div class="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 hover:border-orange-300 transition shadow-sm hover:shadow group">
+          <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#ea580c] mb-5 group-hover:scale-105 transition-transform">
+            <i data-lucide="minimize-2" class="w-5 h-5"></i>
           </div>
-          <h3 class="text-base font-semibold text-white mb-2">Event Normalization</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">
-            Eliminates rapid typing noise and accidental double-clicks before passing session context to the model, reducing token costs by over 70%.
+          <h3 class="text-xl font-bold text-stone-900 tracking-tight">Event Normalizer & Debouncer</h3>
+          <p class="text-stone-600 mt-2.5 text-sm leading-relaxed">
+            Filters typing noise and accidental double-clicks. Compresses 40 individual keystroke events into a single, clean <code class="font-mono text-xs bg-stone-100 px-1.5 py-0.5 rounded text-stone-800">page.fill()</code> command, minimizing LLM token cost.
           </p>
         </div>
 
-        <!-- Card 4 -->
-        <div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 hover:border-slate-700 transition">
-          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mb-4">
+        <!-- Pillar 4 -->
+        <div class="bg-white border border-stone-200/90 rounded-2xl p-6 sm:p-8 hover:border-orange-300 transition shadow-sm hover:shadow group">
+          <div class="w-10 h-10 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-center text-[#ea580c] mb-5 group-hover:scale-105 transition-transform">
             <i data-lucide="cpu" class="w-5 h-5"></i>
           </div>
-          <h3 class="text-base font-semibold text-white mb-2">Dual Model Backend</h3>
-          <p class="text-sm text-slate-400 leading-relaxed">
-            Native support for Google Gemini 3.8 Flash via <code class="text-xs text-slate-300">@google/genai</code>, with seamless fallback to OpenAI, Groq, or local Ollama instances.
+          <h3 class="text-xl font-bold text-stone-900 tracking-tight">Dual Model AI Backend</h3>
+          <p class="text-stone-600 mt-2.5 text-sm leading-relaxed">
+            Powered by the new official <code class="font-mono text-xs bg-stone-100 px-1.5 py-0.5 rounded text-stone-800">@google/genai</code> SDK using Gemini 3.8 Flash for fast, low-cost code synthesis, with seamless fallback to OpenAI <code class="font-mono text-xs bg-stone-100 px-1.5 py-0.5 rounded text-stone-800">gpt-4o-mini</code>.
           </p>
         </div>
+
       </div>
     </section>
 
-    <!-- Quickstart Section -->
-    <section id="quickstart" class="max-w-5xl mx-auto px-6 py-20">
-      <div class="rounded-2xl border border-slate-800 bg-slate-900/30 p-8 sm:p-12 text-center">
-        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Ready to try clickspec?</h2>
-        <p class="mt-3 text-sm text-slate-400 max-w-lg mx-auto">
-          No complicated setup or account needed. Just open your terminal and point it at any web page.
+    <!-- ======================================================== -->
+    <!-- HOW IT WORKS & ARCHITECTURE -->
+    <!-- ======================================================== -->
+    <section id="how-it-works" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70">
+      <div class="text-center max-w-2xl mx-auto mb-12">
+        <h2 class="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
+          How clickspec Works
+        </h2>
+        <p class="text-stone-600 mt-3 text-base sm:text-lg">
+          A four-stage pipeline designed for simplicity and rock-solid determinism.
         </p>
+      </div>
 
-        <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <div class="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-black border border-slate-800 font-mono text-xs sm:text-sm text-slate-300">
-            <span class="text-sky-400 select-none">$</span>
-            <span>npx clickspec https://example.com</span>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Step 1 -->
+        <div class="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-[#ea580c] uppercase tracking-wider mb-2">Stage 01</div>
+            <h4 class="font-bold text-lg text-stone-900">Launch & Intercept</h4>
+            <p class="text-xs text-stone-600 mt-2 leading-relaxed">
+              Launches Chromium with an exposed bridge and injects in-page DOM listeners for clicks, inputs, and SPA route changes.
+            </p>
           </div>
+          <div class="mt-4 pt-3 border-t border-stone-100 font-mono text-[11px] text-stone-500">
+            core/browser.ts
+          </div>
+        </div>
 
-          <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-xs sm:text-sm font-medium bg-slate-800 text-white hover:bg-slate-700 transition">
-            <i data-lucide="github" class="w-4 h-4"></i>
-            <span>GitHub Repository</span>
-          </a>
+        <!-- Step 2 -->
+        <div class="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-[#ea580c] uppercase tracking-wider mb-2">Stage 02</div>
+            <h4 class="font-bold text-lg text-stone-900">Smart Assertion Hook</h4>
+            <p class="text-xs text-stone-600 mt-2 leading-relaxed">
+              Detects newly rendered toast notifications, alerts, modals, and route changes after button clicks.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-stone-100 font-mono text-[11px] text-stone-500">
+            core/recorder.ts
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-[#ea580c] uppercase tracking-wider mb-2">Stage 03</div>
+            <h4 class="font-bold text-lg text-stone-900">Normalize & Compress</h4>
+            <p class="text-xs text-stone-600 mt-2 leading-relaxed">
+              Debounces rapid key inputs into atomic fill operations and pairs assertion candidates with their actions.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-stone-100 font-mono text-[11px] text-stone-500">
+            core/normalizer.ts
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="bg-white p-6 rounded-2xl border border-stone-200/80 shadow-sm flex flex-col justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-[#ea580c] uppercase tracking-wider mb-2">Stage 04</div>
+            <h4 class="font-bold text-lg text-stone-900">AI Spec Synthesis</h4>
+            <p class="text-xs text-stone-600 mt-2 leading-relaxed">
+              Gemini model generates clean TypeScript Playwright code, sanitized, verified, and saved straight to disk.
+            </p>
+          </div>
+          <div class="mt-4 pt-3 border-t border-stone-100 font-mono text-[11px] text-stone-500">
+            ai/synthesizer.ts
+          </div>
         </div>
       </div>
     </section>
+
+    <!-- ======================================================== -->
+    <!-- QUICKSTART / TERMINAL SECTION -->
+    <!-- ======================================================== -->
+    <section id="quickstart" class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70">
+      <div class="bg-[#111827] text-white rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
+        
+        <!-- Subtle orange corner aura -->
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-orange-600/20 blur-3xl rounded-full pointer-events-none"></div>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-stone-800">
+          <div>
+            <span class="text-xs font-mono text-orange-400 font-bold uppercase tracking-wider">Quickstart Guide</span>
+            <h3 class="text-2xl font-bold mt-1 tracking-tight">Run clickspec in seconds</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+            <span class="text-xs text-stone-400 font-mono">Node.js 18+ (ESM)</span>
+          </div>
+        </div>
+
+        <!-- Step by Step Code blocks -->
+        <div class="space-y-5 mt-6 font-mono text-xs sm:text-sm">
+          
+          <!-- Step 1: Install or Run directly -->
+          <div>
+            <div class="text-stone-400 text-xs mb-1.5 flex items-center justify-between font-sans">
+              <span>1. Run interactive generator (Zero install required):</span>
+              <button onclick="copySnippet('npx clickspec http://localhost:3000', 'btn-cp-1')" id="btn-cp-1" class="text-stone-400 hover:text-white transition text-[11px] inline-flex items-center gap-1">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+              </button>
+            </div>
+            <div class="bg-black/60 rounded-xl p-3.5 border border-stone-800 flex items-center justify-between">
+              <span class="text-orange-400">npx clickspec <span class="text-stone-300">http://localhost:3000</span></span>
+            </div>
+          </div>
+
+          <!-- Step 2: Custom output path -->
+          <div>
+            <div class="text-stone-400 text-xs mb-1.5 flex items-center justify-between font-sans">
+              <span>2. Or specify output file and test title:</span>
+              <button onclick="copySnippet('npx clickspec https://app.com -o ./tests/checkout.spec.ts --title &quot;Checkout Flow&quot;', 'btn-cp-2')" id="btn-cp-2" class="text-stone-400 hover:text-white transition text-[11px] inline-flex items-center gap-1">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+              </button>
+            </div>
+            <div class="bg-black/60 rounded-xl p-3.5 border border-stone-800 overflow-x-auto text-stone-300">
+              <span class="text-orange-400">npx clickspec</span> https://app.com <span class="text-stone-400">-o</span> ./tests/checkout.spec.ts <span class="text-stone-400">--title</span> <span class="text-emerald-400">"Checkout Flow"</span>
+            </div>
+          </div>
+
+          <!-- Step 3: Run the test with Playwright -->
+          <div>
+            <div class="text-stone-400 text-xs mb-1.5 flex items-center justify-between font-sans">
+              <span>3. Execute your synthesized Playwright test:</span>
+              <button onclick="copySnippet('npx playwright test ./tests/checkout.spec.ts --headed', 'btn-cp-3')" id="btn-cp-3" class="text-stone-400 hover:text-white transition text-[11px] inline-flex items-center gap-1">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+              </button>
+            </div>
+            <div class="bg-black/60 rounded-xl p-3.5 border border-stone-800 text-emerald-400">
+              npx playwright test ./tests/checkout.spec.ts --headed
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Environment variable notice -->
+        <div class="mt-6 p-4 rounded-xl bg-orange-950/40 border border-orange-800/60 text-xs text-orange-200 flex items-start gap-3">
+          <i data-lucide="key" class="w-4 h-4 text-[#ea580c] flex-shrink-0 mt-0.5"></i>
+          <div>
+            <span class="font-bold text-white">AI Key Configuration:</span>
+            Add <code class="font-mono bg-black/50 px-1.5 py-0.5 rounded text-orange-300">GEMINI_API_KEY</code> (get one free at <a href="https://aistudio.google.com/" target="_blank" class="underline hover:text-white">aistudio.google.com</a>) to your <code class="font-mono bg-black/50 px-1 py-0.5 rounded">.env</code>, or pass <code class="font-mono bg-black/50 px-1 py-0.5 rounded">OPENAI_API_KEY</code> as fallback.
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================== -->
+    <!-- MINIMALIST FOOTER -->
+    <!-- ======================================================== -->
+    <footer class="border-t border-stone-200 bg-[#fbfaf7] py-12 px-4 sm:px-6">
+      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-sm text-stone-600">
+        
+        <!-- Left: Brand -->
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center text-[#ea580c]">
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" />
+            </svg>
+          </div>
+          <span class="font-bold text-stone-900">clickspec</span>
+          <span class="text-stone-400">•</span>
+          <span class="text-xs text-stone-500">AI-Powered Playwright Test Generator</span>
+        </div>
+
+        <!-- Center: Links -->
+        <div class="flex items-center gap-6 text-xs sm:text-sm">
+          <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="hover:text-stone-950 transition">GitHub</a>
+          <a href="https://playwright.dev/" target="_blank" rel="noreferrer" class="hover:text-stone-950 transition">Playwright</a>
+          <a href="https://aistudio.google.com/" target="_blank" rel="noreferrer" class="hover:text-stone-950 transition">Google GenAI</a>
+          <a href="https://github.com/fiizam/clickspec/blob/main/LICENSE" target="_blank" class="hover:text-stone-950 transition">MIT License</a>
+        </div>
+
+        <!-- Right: Copyright -->
+        <div class="text-xs text-stone-500">
+          Crafted by <a href="https://github.com/fiizam" target="_blank" class="font-medium text-stone-800 hover:text-[#ea580c] transition">fiizam</a>
+        </div>
+      </div>
+    </footer>
+
   </div>
 
-  <!-- Footer -->
-  <footer class="border-t border-slate-800/80 bg-[#090d16] py-10 relative z-10 text-xs text-slate-500">
-    <div class="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <span class="font-semibold text-slate-300">clickspec</span>
-        <span>•</span>
-        <span>Open Source under MIT License</span>
-      </div>
-      <div>
-        <span>Created by <a href="https://github.com/fiizam" target="_blank" rel="noreferrer" class="text-slate-400 hover:text-white transition">fiizam</a></span>
-      </div>
-    </div>
-  </footer>
-
+  <!-- Lucide Icons Initialize, Interactive Centerpiece & Copy Helpers -->
   <script>
-    // Initialize Lucide icons
     lucide.createIcons();
 
-    // Clipboard copy functionality
     function copyCliCommand() {
-      const cmdText = document.getElementById('cli-cmd').innerText;
-      navigator.clipboard.writeText(cmdText).then(() => {
-        const btn = document.getElementById('copy-btn');
-        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4 text-emerald-400"></i>';
-        lucide.createIcons();
-        setTimeout(() => {
-          btn.innerHTML = '<i data-lucide="copy" class="w-4 h-4"></i>';
-          lucide.createIcons();
-        }, 2000);
+      const cmd = "npx clickspec http://localhost:3000";
+      navigator.clipboard.writeText(cmd).then(() => {
+        const icon = document.getElementById('copyIcon');
+        const feedback = document.getElementById('copyFeedback');
+        if (icon && feedback) {
+          icon.classList.add('hidden');
+          feedback.classList.remove('hidden');
+          setTimeout(() => {
+            feedback.classList.add('hidden');
+            icon.classList.remove('hidden');
+          }, 2000);
+        }
       });
     }
+
+    function copySnippet(text, btnId) {
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById(btnId);
+        if (btn) {
+          const original = btn.innerHTML;
+          btn.innerHTML = `<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i> Copied!`;
+          lucide.createIcons();
+          setTimeout(() => {
+            btn.innerHTML = original;
+            lucide.createIcons();
+          }, 2000);
+        }
+      });
+    }
+
+    // Interactive Centerpiece Flow Switcher
+    const flows = [
+      {
+        title: 'Filling checkout payment form...',
+        badge: 'Inputs',
+        outHighlight: '2x Faster Entry',
+        outTitle: 'Auto-Filled Locators',
+        outDesc: 'Maps labels and placeholders directly into atomic page.fill()',
+        outSubbadge: 'page.fill()',
+        topTag: 'Zero CSS Paths',
+        topBadge: 'getByLabel',
+        bottomTag: 'Debounced Actions',
+        bottomBadge: '1 Atomic Step'
+      },
+      {
+        title: 'Click "Sign in" & check modal',
+        badge: 'Captured',
+        outHighlight: '5x Faster Authoring',
+        outTitle: '100% Automated Assertions',
+        outDesc: 'Inspects DOM state mutations for alerts, toasts & URLs',
+        outSubbadge: 'Playwright',
+        topTag: 'Zero Fragile Selectors',
+        topBadge: 'Role & Label',
+        bottomTag: '85% Context Reduction',
+        bottomBadge: 'Debounced'
+      },
+      {
+        title: 'Selecting dropdown option...',
+        badge: 'Action',
+        outHighlight: 'Strict Type-Safe',
+        outTitle: 'Semantic Role Selection',
+        outDesc: 'Selects options via accessibility tree without xpath dependencies',
+        outSubbadge: 'selectOption()',
+        topTag: 'Accessible Tree',
+        topBadge: 'getByRole',
+        bottomTag: 'Zero Flakiness',
+        bottomBadge: 'Auto-Wait'
+      }
+    ];
+
+    let currentFlowIdx = 1;
+    let autoCycleTimer = null;
+
+    function switchActiveFlow(idx) {
+      currentFlowIdx = idx;
+      const data = flows[idx];
+
+      // Update pills styling smoothly
+      for (let i = 0; i < 3; i++) {
+        const pill = document.getElementById(`flow-pill-${i}`);
+        if (!pill) continue;
+        if (i === idx) {
+          pill.className = "w-full sm:w-72 px-4 py-3 rounded-full bg-white border-2 border-orange-400 shadow-[0_10px_25px_-5px_rgba(234,88,12,0.18)] flex items-center justify-between gap-2.5 cursor-pointer smooth-lift animate-float-2 transition-all select-none";
+          pill.innerHTML = `
+            <div class="flex items-center gap-2 overflow-hidden">
+              <div class="w-5 h-5 rounded-full bg-orange-100 flex-shrink-0 flex items-center justify-center text-[#ea580c]">
+                <svg class="w-3 h-3 fill-current" viewBox="0 0 24 24"><path d="M12 2L14.5 9.5L22 12L14.5 14.5L12 22L9.5 14.5L2 12L9.5 9.5L12 2Z" /></svg>
+              </div>
+              <span class="text-xs sm:text-sm font-semibold text-stone-900 truncate">${data.title}</span>
+            </div>
+            <span class="flex-shrink-0 text-[10px] font-mono uppercase bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full font-bold border border-orange-300">${data.badge}</span>
+          `;
+        } else {
+          pill.className = `w-full sm:w-64 px-4 py-2.5 rounded-full bg-white/70 border border-stone-200/80 text-xs text-stone-500 font-medium text-center lg:text-right shadow-sm cursor-pointer smooth-lift animate-float-${i === 0 ? 1 : 3} transition-all select-none hover:border-orange-300`;
+          pill.innerHTML = `<span>${flows[i].title}</span>`;
+        }
+      }
+
+      // Update right-side output card with smooth micro-transition
+      const outCard = document.getElementById('out-main-card');
+      const outTitle = document.getElementById('out-title');
+      const outDesc = document.getElementById('out-desc');
+      const outHighlight = document.getElementById('out-highlight');
+      const outSubbadge = document.getElementById('out-subbadge');
+      const outTagTop = document.getElementById('out-tag-top');
+      const outBadgeTop = document.getElementById('out-badge-top');
+      const outTagBottom = document.getElementById('out-tag-bottom');
+      const outBadgeBottom = document.getElementById('out-badge-bottom');
+
+      if (outCard && outTitle && outDesc) {
+        outCard.style.opacity = '0.5';
+        outCard.style.transform = 'scale(0.98)';
+        setTimeout(() => {
+          outTitle.innerText = data.outTitle;
+          outDesc.innerText = data.outDesc;
+          if (outHighlight) outHighlight.innerText = data.outHighlight;
+          if (outSubbadge) outSubbadge.innerText = data.outSubbadge;
+          if (outTagTop) outTagTop.innerText = data.topTag;
+          if (outBadgeTop) outBadgeTop.innerText = data.topBadge;
+          if (outTagBottom) outTagBottom.innerText = data.bottomTag;
+          if (outBadgeBottom) outBadgeBottom.innerText = data.bottomBadge;
+
+          outCard.style.opacity = '1';
+          outCard.style.transform = 'scale(1)';
+        }, 120);
+      }
+    }
+
+    // Auto-cycle every 5 seconds if user is not interacting
+    function startAutoCycle() {
+      if (autoCycleTimer) clearInterval(autoCycleTimer);
+      autoCycleTimer = setInterval(() => {
+        currentFlowIdx = (currentFlowIdx + 1) % 3;
+        switchActiveFlow(currentFlowIdx);
+      }, 4800);
+    }
+
+    const flowContainer = document.getElementById('interactive-flow-container');
+    if (flowContainer) {
+      flowContainer.addEventListener('mouseenter', () => clearInterval(autoCycleTimer));
+      flowContainer.addEventListener('mouseleave', () => startAutoCycle());
+    }
+    startAutoCycle();
   </script>
 </body>
 </html>
