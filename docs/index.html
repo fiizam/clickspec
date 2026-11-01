@@ -232,15 +232,36 @@
         </nav>
 
         <!-- Right Action Pill -->
-        <div class="flex items-center gap-2 sm:gap-4">
+        <div class="flex items-center gap-2 sm:gap-3">
           <a href="https://github.com/fiizam/clickspec" target="_blank" rel="noreferrer" class="text-xs sm:text-sm font-medium text-stone-600 hover:text-stone-900 flex items-center gap-1.5 transition px-2 py-1">
             <i data-lucide="github" class="w-4 h-4"></i>
             <span class="hidden sm:inline">GitHub</span>
           </a>
-          <a href="#quickstart" class="bg-[#111827] text-white hover:bg-black text-xs sm:text-sm font-medium rounded-full px-4 sm:px-5 py-2 transition shadow-sm hover:shadow inline-flex items-center gap-1.5 group">
+          <a href="#quickstart" class="hidden sm:inline-flex bg-[#111827] text-white hover:bg-black text-xs sm:text-sm font-medium rounded-full px-4 sm:px-5 py-2 transition shadow-sm hover:shadow items-center gap-1.5 group">
             <span>Get Started</span>
             <span class="group-hover:translate-x-0.5 transition-transform">→</span>
           </a>
+
+          <!-- Mobile Hamburger Toggle Button -->
+          <button id="mobile-menu-toggle" onclick="toggleMobileMenu()" class="md:hidden p-1.5 rounded-full text-stone-600 hover:text-stone-900 hover:bg-stone-100 transition" aria-label="Toggle navigation menu">
+            <i data-lucide="menu" id="hamburger-icon" class="w-5 h-5"></i>
+            <i data-lucide="x" id="close-icon" class="w-5 h-5 hidden"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Dropdown Drawer -->
+      <div id="mobile-nav-drawer" class="hidden md:hidden mt-2 bg-white/95 backdrop-blur-xl border border-stone-200/90 rounded-2xl p-4 shadow-xl flex flex-col gap-3 transition-all animate-float-1">
+        <a href="#how-it-works" onclick="toggleMobileMenu()" class="text-sm font-medium text-stone-700 hover:text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition">How it Works</a>
+        <a href="#showcase" onclick="toggleMobileMenu()" class="text-sm font-medium text-stone-700 hover:text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition">Showcase Comparison</a>
+        <a href="#architecture" onclick="toggleMobileMenu()" class="text-sm font-medium text-stone-700 hover:text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition">Architecture & Pillars</a>
+        <a href="#quickstart" onclick="toggleMobileMenu()" class="text-sm font-medium text-stone-700 hover:text-orange-600 px-3 py-1.5 rounded-lg hover:bg-orange-50 transition">Docs & Quickstart</a>
+        <div class="pt-2 border-t border-stone-100 flex items-center justify-between">
+          <a href="https://github.com/fiizam/clickspec" target="_blank" class="text-xs font-semibold text-stone-600 hover:text-stone-900 flex items-center gap-1.5 px-3 py-1">
+            <i data-lucide="github" class="w-4 h-4"></i>
+            <span>GitHub Repository</span>
+          </a>
+          <a href="#quickstart" onclick="toggleMobileMenu()" class="bg-[#ea580c] text-white text-xs font-medium rounded-full px-4 py-1.5 shadow">Get Started</a>
         </div>
       </div>
     </header>
@@ -464,7 +485,7 @@
     <!-- ======================================================== -->
     <!-- INTERACTIVE CODE SHOWCASE (Codegen vs clickspec) -->
     <!-- ======================================================== -->
-    <section id="showcase" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
+    <section id="showcase" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 scroll-mt-24">
       <div class="text-center max-w-2xl mx-auto mb-10">
         <h2 class="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
           Stop Debugging Broken Selectors
@@ -547,9 +568,9 @@
     </section>
 
     <!-- ======================================================== -->
-    <!-- CORE PILLARS (Bento Grid) -->
+    <!-- CORE PILLARS & ARCHITECTURE (Bento Grid) -->
     <!-- ======================================================== -->
-    <section id="features" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70">
+    <section id="architecture" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70 scroll-mt-24">
       <div class="text-center max-w-2xl mx-auto mb-12">
         <h2 class="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
           Engineered for Clean Code Quality
@@ -609,9 +630,9 @@
     </section>
 
     <!-- ======================================================== -->
-    <!-- HOW IT WORKS & ARCHITECTURE -->
+    <!-- HOW IT WORKS PIPELINE -->
     <!-- ======================================================== -->
-    <section id="how-it-works" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70">
+    <section id="how-it-works" class="max-w-5xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70 scroll-mt-24">
       <div class="text-center max-w-2xl mx-auto mb-12">
         <h2 class="text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">
           How clickspec Works
@@ -683,7 +704,7 @@
     <!-- ======================================================== -->
     <!-- QUICKSTART / TERMINAL SECTION -->
     <!-- ======================================================== -->
-    <section id="quickstart" class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70">
+    <section id="quickstart" class="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20 border-t border-stone-200/70 scroll-mt-24">
       <div class="bg-[#111827] text-white rounded-3xl p-6 sm:p-10 shadow-2xl relative overflow-hidden">
         
         <!-- Subtle orange corner aura -->
@@ -939,6 +960,26 @@
       flowContainer.addEventListener('mouseleave', () => startAutoCycle());
     }
     startAutoCycle();
+
+    // Mobile Hamburger Menu Toggle
+    function toggleMobileMenu() {
+      const drawer = document.getElementById('mobile-nav-drawer');
+      const hamburgerIcon = document.getElementById('hamburger-icon');
+      const closeIcon = document.getElementById('close-icon');
+
+      if (drawer) {
+        const isHidden = drawer.classList.contains('hidden');
+        if (isHidden) {
+          drawer.classList.remove('hidden');
+          if (hamburgerIcon) hamburgerIcon.classList.add('hidden');
+          if (closeIcon) closeIcon.classList.remove('hidden');
+        } else {
+          drawer.classList.add('hidden');
+          if (hamburgerIcon) hamburgerIcon.classList.remove('hidden');
+          if (closeIcon) closeIcon.classList.add('hidden');
+        }
+      }
+    }
   </script>
 </body>
 </html>
