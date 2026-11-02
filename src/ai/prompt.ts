@@ -62,3 +62,77 @@ Requirements:
 - Return ONLY the executable TypeScript test code.`;
 }
 
+export const POM_SYSTEM_PROMPT = `You are a Principal Test Automation & DevTools Engineer specializing in Playwright Page Object Model (POM) architecture with TypeScript.
+
+Your task is to take a chronological sequence of recorded user interactions and DOM state mutations, and synthesize BOTH:
+1. A strongly-typed Page Object Class (.ts) containing getters/locators and reusable action methods.
+2. A clean Playwright test spec (.spec.ts) that instantiates the Page Object and asserts outcomes.
+
+Follow these strict engineering rules:
+
+1. LOCATOR STRATEGY & RESILIENCE:
+   - Use user-facing accessible locators inside the Page Object class:
+     page.getByRole(), page.getByLabel(), page.getByPlaceholder(), page.getByText(), page.getByTestId().
+   - Never use fragile CSS paths like div > div:nth-child(3).
+
+2. PAGE OBJECT CLASS STRUCTURE:
+   - Export a class that receives 'page: Page' in its constructor.
+   - Define locators as readonly class properties: readonly submitButton = this.page.getByRole('button', ...);
+   - Create clean, concise async action methods for user flows (e.g., async fillCredentials(...), async clickSubmit()).
+
+3. SPEC FILE STRUCTURE:
+   - Import { test, expect } from '@playwright/test'.
+   - Import the Page Object class from the provided relative import path.
+   - The test should instantiate the page object, call its action methods, and perform smart assertions (expect(page).toHaveURL(...), expect(...).toBeVisible()).
+
+4. OUTPUT FORMAT:
+   You MUST return your answer in this exact tagged format:
+
+<<<PAGE_OBJECT>>>
+import type { Page, Locator } from '@playwright/test';
+
+export class FlowPage {
+  readonly page: Page;
+  // locators and methods
+}
+<<<END_PAGE_OBJECT>>>
+
+<<<SPEC>>>
+import { test, expect } from '@playwright/test';
+import { FlowPage } from '{{PAGE_OBJECT_IMPORT}}';
+
+test('...', async ({ page }) => {
+  // test steps
+});
+<<<END_SPEC>>>
+
+Do NOT include any markdown code blocks or explanations outside these tags.`;
+
+export function buildPOMSynthesisUserPrompt(
+  sequence: InteractionSequence,
+  pageClassName: string,
+  relativeImportPath: string,
+  testTitle?: string
+): string {
+  const title = testTitle || `E2E POM Journey on ${sequence.initialUrl}`;
+  const eventsJson = JSON.stringify(sequence.events, null, 2);
+
+  return `Synthesize a Playwright Page Object Model architecture based on the recorded session below.
+
+Test Title: "${title}"
+Initial Target URL: ${sequence.initialUrl}
+Page Class Name: ${pageClassName}
+Relative Import Path for Spec: "${relativeImportPath}"
+Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)
+
+--- RECORDED INTERACTION SEQUENCE (JSON) ---
+${eventsJson}
+--- END RECORDED SEQUENCE ---
+
+Requirements:
+- Structure the Page Object with reusable locator properties and high-level action methods.
+- The Spec file must import the Page Object using: import { ${pageClassName} } from '${relativeImportPath}';
+- Include smart assertions for URL transitions and DOM alert/toast mutations.
+- Output strictly using <<<PAGE_OBJECT>>>...<<<END_PAGE_OBJECT>>> and <<<SPEC>>>...<<<END_SPEC>>> tags.`;
+}
+

@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { EventNormalizer } from '../src/core/normalizer.js';
-import { formatGeneratedTest } from '../src/utils/formatter.js';
-import { buildSynthesisUserPrompt } from '../src/ai/prompt.js';
+import { formatGeneratedTest, formatPOMResult } from '../src/utils/formatter.js';
+import { buildSynthesisUserPrompt, buildPOMSynthesisUserPrompt } from '../src/ai/prompt.js';
 import type { RecordedEvent } from '../src/types.js';
 
 describe('EventNormalizer', () => {
@@ -229,5 +229,135 @@ describe('buildSynthesisUserPrompt', () => {
     assert.match(prompt, /http:\/\/localhost:3000/);
     assert.match(prompt, /Click button/);
     assert.match(prompt, /Get Started/);
+  });
+});
+
+describe('formatPOMResult', () => {
+  it('should parse tagged output into Page Object and Spec cleanly', () => {
+    const rawAiOutput = `
+<<<PAGE_OBJECT>>>
+import type { Page, Locator } from '@playwright/test';
+
+export class LoginPage {
+  readonly page: Page;
+  readonly loginBtn: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.loginBtn = page.getByRole('button', { name: 'Log in' });
+  }
+
+  async clickLogin() {
+    await this.loginBtn.click();
+  }
+}
+<<<END_PAGE_OBJECT>>>
+
+<<<SPEC>>>
+import { test, expect } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage.js';
+
+test('User can log in', async ({ page }) => {
+  const loginPage = new LoginPage(page);
+  await page.goto('https://example.com/login');
+  await loginPage.clickLogin();
+  await expect(page).toHaveURL('https://example.com/dashboard');
+});
+<<<END_SPEC>>>
+`;
+
+    const result = formatPOMResult(rawAiOutput, 'LoginPage', '../pages/LoginPage.js', 'User can log in');
+
+    assert.equal(result.isValid, true);
+    assert.match(result.pageObjectCode, /export class LoginPage/);
+    assert.match(result.pageObjectCode, /readonly loginBtn: Locator/);
+    assert.match(result.specCode, /import { LoginPage } from '\.\.\/pages\/LoginPage\.js'/);
+    assert.match(result.specCode, /test\('User can log in'/);
+    assert.ok(!result.pageObjectCode.includes('<<<PAGE_OBJECT>>>'));
+    assert.ok(!result.specCode.includes('<<<SPEC>>>'));
+  });
+
+  it('should inject missing imports into Page Object and Spec', () => {
+    const rawAiOutput = `
+<<<PAGE_OBJECT>>>
+export class DashboardPage {
+  constructor(page) {
+    this.page = page;
+  }
+}
+<<<END_PAGE_OBJECT>>>
+
+<<<SPEC>>>
+test('dashboard check', async ({ page }) => {
+  const dash = new DashboardPage(page);
+});
+<<<END_SPEC>>>
+`;
+
+    const result = formatPOMResult(rawAiOutput, 'DashboardPage', '../pages/DashboardPage.js');
+
+    assert.equal(result.isValid, true);
+    assert.match(result.pageObjectCode, /import type { Page, Locator } from '@playwright\/test';/);
+    assert.match(result.specCode, /import { test, expect } from '@playwright\/test';/);
+    assert.match(result.specCode, /import { DashboardPage } from '\.\.\/pages\/DashboardPage\.js';/);
+  });
+
+  it('should handle fallback when AI omits tags', () => {
+    const rawAiOutput = `
+export class OrderPage {
+  constructor(public page: any) {}
+}
+
+test('Order flow', async ({ page }) => {
+  const order = new OrderPage(page);
+});
+`;
+
+    const result = formatPOMResult(rawAiOutput, 'OrderPage', '../pages/OrderPage.js');
+
+    assert.equal(result.isValid, true);
+    assert.match(result.pageObjectCode, /export class OrderPage/);
+    assert.match(result.specCode, /test\('Order flow'/);
+    assert.ok(result.warnings.some((w) => w.includes('heuristic separation')));
+  });
+
+  it('should return invalid for empty response', () => {
+    const result = formatPOMResult('');
+    assert.equal(result.isValid, false);
+    assert.equal(result.warnings.length > 0, true);
+  });
+});
+
+describe('buildPOMSynthesisUserPrompt', () => {
+  it('should format POM prompt with class name, relative import, and sequence', () => {
+    const prompt = buildPOMSynthesisUserPrompt(
+      {
+        initialUrl: 'https://example.com/checkout',
+        startedAt: 1000,
+        endedAt: 3000,
+        events: [
+          {
+            id: 'norm_1',
+            action: 'click',
+            timestamp: 2000,
+            url: 'https://example.com/checkout',
+            description: 'Click button "Place Order"',
+          },
+        ],
+        metadata: {
+          totalRawEvents: 1,
+          normalizedCount: 1,
+        },
+      },
+      'CheckoutPage',
+      '../pages/CheckoutPage.js',
+      'Checkout Journey'
+    );
+
+    assert.match(prompt, /CheckoutPage/);
+    assert.match(prompt, /\.\.\/pages\/CheckoutPage\.js/);
+    assert.match(prompt, /https:\/\/example\.com\/checkout/);
+    assert.match(prompt, /Place Order/);
+    assert.match(prompt, /<<<PAGE_OBJECT>>>/);
   });
 });

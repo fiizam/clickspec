@@ -1,8 +1,13 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createAIClient } from './client.js';
-import { SYSTEM_PROMPT, buildSynthesisUserPrompt } from './prompt.js';
-import { formatGeneratedTest } from '../utils/formatter.js';
+import {
+  SYSTEM_PROMPT,
+  buildSynthesisUserPrompt,
+  POM_SYSTEM_PROMPT,
+  buildPOMSynthesisUserPrompt,
+} from './prompt.js';
+import { formatGeneratedTest, formatPOMResult } from '../utils/formatter.js';
 import { logInfo, logWarn } from '../utils/logger.js';
 import type { InteractionSequence, TestSynthesisOptions, TestSynthesisResult } from '../types.js';
 
@@ -21,6 +26,81 @@ export async function synthesizePlaywrightTest(
 
     logInfo(`Synthesizing test with AI provider: ${aiClient.provider} (model: ${aiClient.model})...`);
 
+    const absoluteOutputPath = path.resolve(process.cwd(), options.outputPath);
+
+    // ==========================================
+    // 1. PAGE OBJECT MODEL (POM) SYNTHESIS FLOW
+    // ==========================================
+    if (options.pom) {
+      const pageClassName = derivePageClassName(options.outputPath);
+      const defaultPageObjectPath =
+        options.pageObjectPath ||
+        path.resolve(process.cwd(), 'pages', `${pageClassName}.ts`);
+      const absolutePOPath = path.resolve(process.cwd(), defaultPageObjectPath);
+
+      // Derive clean relative import for ESM / TypeScript
+      let relativeImport = path
+        .relative(path.dirname(absoluteOutputPath), absolutePOPath)
+        .replace(/\\/g, '/');
+      if (!relativeImport.startsWith('.')) {
+        relativeImport = `./${relativeImport}`;
+      }
+      relativeImport = relativeImport.replace(/\.ts$/, '');
+
+      logInfo(`Mode: Page Object Model (${pageClassName} in ${path.relative(process.cwd(), absolutePOPath)})`);
+
+      const userPrompt = buildPOMSynthesisUserPrompt(
+        sequence,
+        pageClassName,
+        relativeImport,
+        options.testTitle
+      );
+
+      if (options.debug) {
+        logInfo(`DEBUG: POM prompt payload length: ${userPrompt.length} chars`);
+      }
+
+      const rawResponse = await aiClient.generateText(POM_SYSTEM_PROMPT, userPrompt);
+      const formatted = formatPOMResult(
+        rawResponse,
+        pageClassName,
+        relativeImport,
+        options.testTitle || `Journey for ${options.url}`
+      );
+
+      if (formatted.warnings.length > 0 && options.debug) {
+        for (const warning of formatted.warnings) {
+          logWarn(`Formatter notice: ${warning}`);
+        }
+      }
+
+      // Ensure destination folders exist
+      await fs.mkdir(path.dirname(absolutePOPath), { recursive: true });
+      await fs.mkdir(path.dirname(absoluteOutputPath), { recursive: true });
+
+      // Write Page Object class and Spec file
+      await fs.writeFile(absolutePOPath, formatted.pageObjectCode, 'utf-8');
+      await fs.writeFile(absoluteOutputPath, formatted.specCode, 'utf-8');
+
+      return {
+        success: true,
+        code: formatted.specCode,
+        outputPath: absoluteOutputPath,
+        isPom: true,
+        pageObjectPath: absolutePOPath,
+        pageObjectCode: formatted.pageObjectCode,
+        modelUsed: `${aiClient.provider}:${aiClient.model}`,
+        stats: {
+          rawEventsCount,
+          normalizedEventsCount,
+          durationMs: Date.now() - startTime,
+        },
+      };
+    }
+
+    // ==========================================
+    // 2. STANDARD FLAT SPEC SYNTHESIS FLOW
+    // ==========================================
     const userPrompt = buildSynthesisUserPrompt(sequence, options.testTitle);
 
     if (options.debug) {
@@ -38,7 +118,6 @@ export async function synthesizePlaywrightTest(
     }
 
     // Resolve destination path and make sure directory exists
-    const absoluteOutputPath = path.resolve(process.cwd(), options.outputPath);
     await fs.mkdir(path.dirname(absoluteOutputPath), { recursive: true });
 
     // Write file to disk
@@ -48,6 +127,7 @@ export async function synthesizePlaywrightTest(
       success: true,
       code: formatted.code,
       outputPath: absoluteOutputPath,
+      isPom: false,
       modelUsed: `${aiClient.provider}:${aiClient.model}`,
       stats: {
         rawEventsCount,
@@ -70,5 +150,20 @@ export async function synthesizePlaywrightTest(
       error: errorMessage,
     };
   }
+}
+
+function derivePageClassName(outputPath: string): string {
+  const base = path
+    .basename(outputPath)
+    .replace(/\.(spec|test)\.(ts|js)$/, '')
+    .replace(/\.(ts|js)$/, '');
+
+  const cleaned = base
+    .split(/[-_.]/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('');
+
+  return `${cleaned || 'Flow'}Page`;
 }
 

@@ -77,12 +77,21 @@ export function formatEventSummary(event: RecordedEvent | NormalizedEvent): stri
   return `${typeColor(`[${event.type}]`)} ${pc.dim(desc)}`;
 }
 
-export function printCompletionCard(outputPath: string, eventCount: number, modelName: string): void {
+export function printCompletionCard(
+  outputPath: string,
+  eventCount: number,
+  modelName: string,
+  pageObjectPath?: string
+): void {
   const line = '─'.repeat(60);
   console.log('\n' + pc.cyan(line));
   console.log(pc.bold(pc.green('  ✨ PLAYWRIGHT SPEC GENERATED SUCCESSFULLY')));
   console.log(pc.cyan(line));
   console.log(`  ${pc.bold('File:')}          ${pc.cyan(outputPath)}`);
+  if (pageObjectPath) {
+    console.log(`  ${pc.bold('Page Object:')}   ${pc.cyan(pageObjectPath)}`);
+    console.log(`  ${pc.bold('Pattern:')}       ${pc.magenta('Page Object Model (POM)')}`);
+  }
   console.log(`  ${pc.bold('Interactions:')}  ${pc.yellow(String(eventCount))} captured events synthesized`);
   console.log(`  ${pc.bold('AI Model:')}      ${pc.magenta(modelName)}`);
   console.log(pc.cyan(line));

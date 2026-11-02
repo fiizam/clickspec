@@ -114,6 +114,8 @@ export interface TestSynthesisOptions {
   testTitle?: string;
   modelName?: string;
   debug?: boolean;
+  pom?: boolean;
+  pageObjectPath?: string;
 }
 
 export interface TestSynthesisResult {
@@ -126,6 +128,9 @@ export interface TestSynthesisResult {
     normalizedEventsCount: number;
     durationMs: number;
   };
+  isPom?: boolean;
+  pageObjectPath?: string;
+  pageObjectCode?: string;
   error?: string;
 }
 

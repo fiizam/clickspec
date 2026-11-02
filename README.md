@@ -53,7 +53,7 @@ test('User authentication flow', async ({ page }) => {
 
 ### Prerequisites
 
-- Node.js 18 or newer
+- Node.js 20 or newer
 - An API key for **Google Gemini** (recommended, free tier available at [Google AI Studio](https://aistudio.google.com/)) or **OpenAI**.
 
 ### Installation
@@ -115,6 +115,8 @@ clickspec [url] [options]
 |--------|-----------|-------------|---------|
 | `url` | - | Target URL to record | Prompts if omitted |
 | `--output <path>` | `-o` | Destination path for the generated spec | `./tests/flow.spec.ts` |
+| `--pom` | - | Generate structured Page Object Model (POM) classes and spec | `false` |
+| `--page-path <path>` | - | Destination path for Page Object class (used with `--pom`) | `./pages/<Page>.ts` |
 | `--model <name>` | `-m` | AI model override | `gemini-3.8-flash` |
 | `--title <title>` | - | Explicit test case title | Inferred from journey |
 | `--headless` | - | Run browser without UI (useful for CI scripts) | `false` |
@@ -127,8 +129,60 @@ clickspec [url] [options]
 # Record against a local dev server
 npm run dev -- http://localhost:3000 -o ./tests/checkout.spec.ts
 
+# Generate with Page Object Model (POM) architecture
+npm run dev -- https://my-app.com/login --pom
+
+# Custom Page Object destination
+npm run dev -- https://my-app.com/login --pom -o ./tests/login.spec.ts --page-path ./pages/LoginPage.ts
+
 # Set a custom test title
 npm run dev -- https://my-app.com --title "User Registration Journey"
+```
+
+---
+
+### Page Object Model (POM) Mode
+
+When `--pom` is passed, `clickspec` separates locators and interactions into a dedicated Page Object class and generates a clean spec that references it.
+
+#### 1. Page Object (`pages/LoginPage.ts`)
+```typescript
+import type { Page, Locator } from '@playwright/test';
+
+export class LoginPage {
+  readonly page: Page;
+  readonly emailInput: Locator;
+  readonly passwordInput: Locator;
+  readonly submitButton: Locator;
+
+  constructor(page: Page) {
+    this.page = page;
+    this.emailInput = page.getByLabel('Email address');
+    this.passwordInput = page.getByLabel('Password');
+    this.submitButton = page.getByRole('button', { name: 'Sign in' });
+  }
+
+  async login(email: string, pass: string) {
+    await this.emailInput.fill(email);
+    await this.passwordInput.fill(pass);
+    await this.submitButton.click();
+  }
+}
+```
+
+#### 2. Test Spec (`tests/login.spec.ts`)
+```typescript
+import { test, expect } from '@playwright/test';
+import { LoginPage } from '../pages/LoginPage.js';
+
+test('User authentication flow', async ({ page }) => {
+  const loginPage = new LoginPage(page);
+  await page.goto('https://app.example.com/login');
+  await loginPage.login('user@example.com', 'secret123');
+
+  await expect(page).toHaveURL(/.*dashboard/);
+  await expect(page.getByRole('alert')).toContainText('Login successful');
+});
 ```
 
 ---

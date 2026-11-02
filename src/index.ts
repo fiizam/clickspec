@@ -15,6 +15,8 @@ interface CliOptions {
   title?: string;
   headless?: boolean;
   debug?: boolean;
+  pom?: boolean;
+  pagePath?: string;
 }
 
 async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<void> {
@@ -180,6 +182,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
       testTitle: options.title,
       modelName: options.model,
       debug: options.debug,
+      pom: options.pom,
+      pageObjectPath: options.pagePath,
     });
 
     if (!synthesisResult.success) {
@@ -194,7 +198,10 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     printCompletionCard(
       path.relative(process.cwd(), synthesisResult.outputPath),
       sequence.metadata.normalizedCount,
-      synthesisResult.modelUsed
+      synthesisResult.modelUsed,
+      synthesisResult.pageObjectPath
+        ? path.relative(process.cwd(), synthesisResult.pageObjectPath)
+        : undefined
     );
 
     p.outro(pc.bold(pc.green('All done! Happy testing.')));
@@ -274,6 +281,8 @@ program
   .option('-o, --output <path>', 'Output path for generated test spec (default: ./tests/flow.spec.ts)')
   .option('-m, --model <name>', 'AI model to use (default: gemini-3.8-flash or gpt-4o-mini)')
   .option('--title <title>', 'Descriptive title for the test')
+  .option('--pom', 'Generate structured Page Object Model (POM) classes and spec')
+  .option('--page-path <path>', 'Custom destination path for Page Object class (used with --pom)')
   .option('--headless', 'Run browser in headless mode')
   .option('--debug', 'Enable verbose debug logging')
   .action(async (url?: string, options?: CliOptions) => {
