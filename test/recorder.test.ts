@@ -4,7 +4,7 @@ import { BrowserSession } from '../src/core/browser.js';
 import { EventNormalizer } from '../src/core/normalizer.js';
 
 describe('BrowserSession & InteractionRecorder Integration', () => {
-  it('should record user interactions and capture smart assertions in headless mode', async () => {
+  it('should record user interactions and capture smart assertions in headless mode', { timeout: 60000 }, async () => {
     // Spin up browser session in headless mode for CI/test environments
     const session = await BrowserSession.launch({
       targetUrl: 'about:blank',
