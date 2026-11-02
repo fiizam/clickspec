@@ -8,6 +8,15 @@
   "bin": {
     "clickspec": "./bin/clickspec.js"
   },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fiizam/clickspec.git"
+  },
+  "homepage": "https://clicktest.my.id",
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc",

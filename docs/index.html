@@ -5,6 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>clickspec — Turn Browser Clicks Into Resilient Playwright Tests</title>
   <meta name="description" content="AI-Powered E2E Playwright Test Generator CLI. Record real browser interactions and DOM mutations. Let AI synthesize production-grade specs with zero fragile CSS selectors and automated assertions.">
+  <link rel="canonical" href="https://clicktest.my.id/">
+
+  <!-- Open Graph / Facebook / LinkedIn -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://clicktest.my.id/">
+  <meta property="og:title" content="clickspec — Turn Browser Clicks Into Resilient Playwright Tests">
+  <meta property="og:description" content="AI-Powered CLI devtool that records live browser interactions and DOM mutations to synthesize clean Playwright E2E tests and Page Object Models with smart assertions.">
+  <meta property="og:image" content="https://clicktest.my.id/og-image.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://clicktest.my.id/">
+  <meta name="twitter:title" content="clickspec — Turn Browser Clicks Into Resilient Playwright Tests">
+  <meta name="twitter:description" content="AI-Powered CLI devtool that records live browser interactions and DOM mutations to synthesize clean Playwright E2E tests and Page Object Models with smart assertions.">
+  <meta name="twitter:image" content="https://clicktest.my.id/og-image.png">
+
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ea580c'><path d='M12 2L14.4 9.6L22 12L14.4 14.4L12 22L9.6 14.4L2 12L9.6 9.6L12 2Z'/></svg>">
 
   <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
@@ -533,33 +551,89 @@
         <div class="bg-white border-2 border-orange-300 rounded-2xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
           <div class="absolute top-0 left-0 right-0 h-1.5 bg-[#ea580c]"></div>
           <div>
-            <div class="flex items-center justify-between pb-4 border-b border-stone-100">
+            <div class="flex items-center justify-between pb-3 border-b border-stone-100 flex-wrap gap-2">
               <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-[#ea580c]"></span>
-                <span class="font-bold text-sm text-stone-900">clickspec AI Synthesis</span>
+                <span class="font-bold text-sm text-stone-900">clickspec Output</span>
               </div>
-              <span class="text-[11px] font-mono font-semibold text-[#ea580c] bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
-                Resilient & Tested
-              </span>
+              
+              <!-- Tab Switcher: Standard Spec vs Page Object Model -->
+              <div class="flex items-center bg-stone-100 p-0.5 rounded-lg border border-stone-200/80 text-[11px] font-semibold">
+                <button id="tab-btn-spec" onclick="switchSpecMode('spec')" class="px-2.5 py-1 rounded-md transition-all bg-white text-orange-700 shadow-xs cursor-pointer">
+                  Standard Spec
+                </button>
+                <button id="tab-btn-pom" onclick="switchSpecMode('pom')" class="px-2.5 py-1 rounded-md transition-all text-stone-500 hover:text-stone-900 cursor-pointer">
+                  Page Object Model (<span class="font-mono text-[10px]">--pom</span>)
+                </button>
+              </div>
             </div>
 
-            <div class="mt-4 font-mono text-xs text-stone-800 bg-orange-50/30 rounded-xl p-4 border border-orange-100 overflow-x-auto leading-relaxed">
+            <!-- VIEW 1: STANDARD FLAT SPEC -->
+            <div id="view-standard-spec" class="mt-4 font-mono text-xs text-stone-800 bg-orange-50/30 rounded-xl p-4 border border-orange-100 overflow-x-auto leading-relaxed">
+              <div class="text-[10px] text-stone-400 mb-2 pb-1.5 border-b border-orange-100/60 font-sans flex items-center justify-between">
+                <span class="font-medium text-stone-700">tests/flow.spec.ts</span>
+                <span class="text-orange-600 font-mono">1 file output</span>
+              </div>
               <span class="text-orange-700 font-semibold">import</span> { test, expect } <span class="text-orange-700 font-semibold">from</span> <span class="text-emerald-700">'@playwright/test'</span>;<br><br>
               test(<span class="text-emerald-700">'User authenticates & verifies dashboard'</span>, <span class="text-orange-700 font-semibold">async</span> ({ page }) =&gt; {<br>
-              &nbsp;&nbsp;<span class="text-stone-400">// ✅ Accessible locators matching real user intent</span><br>
+              &nbsp;&nbsp;<span class="text-stone-400">// Accessible locators matching real user intent</span><br>
               &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> page.<span class="text-blue-600 font-semibold">getByLabel</span>(<span class="text-emerald-700">'Email Address'</span>).fill(<span class="text-emerald-700">'user@test.com'</span>);<br>
               &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> page.<span class="text-blue-600 font-semibold">getByPlaceholder</span>(<span class="text-emerald-700">'Enter password'</span>).fill(<span class="text-emerald-700">'secret123'</span>);<br>
               &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> page.<span class="text-blue-600 font-semibold">getByRole</span>(<span class="text-emerald-700">'button'</span>, { name: <span class="text-emerald-700">'Sign In'</span> }).click();<br><br>
-              &nbsp;&nbsp;<span class="text-stone-400">// 🎯 Auto-synthesized smart assertions</span><br>
+              &nbsp;&nbsp;<span class="text-stone-400">// Auto-synthesized smart assertions</span><br>
               &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-purple-600 font-semibold">expect</span>(page).toHaveURL(<span class="text-emerald-700">/.*dashboard/</span>);<br>
               &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-purple-600 font-semibold">expect</span>(page.getByRole(<span class="text-emerald-700">'heading'</span>, { name: <span class="text-emerald-700">'Welcome back'</span> })).toBeVisible();<br>
               &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-purple-600 font-semibold">expect</span>(page.getByRole(<span class="text-emerald-700">'alert'</span>)).toContainText(<span class="text-emerald-700">'Login successful'</span>);<br>
               });
             </div>
+
+            <!-- VIEW 2: PAGE OBJECT MODEL (POM) ARCHITECTURE -->
+            <div id="view-pom-spec" class="hidden mt-4 space-y-3">
+              <!-- File 1: Page Object Class -->
+              <div class="font-mono text-[11px] text-stone-800 bg-orange-50/30 rounded-xl p-3.5 border border-orange-100 overflow-x-auto leading-relaxed">
+                <div class="text-[10px] text-stone-400 mb-1.5 pb-1 border-b border-orange-100/60 font-sans flex items-center justify-between">
+                  <span class="font-medium text-stone-700">pages/LoginPage.ts</span>
+                  <span class="text-[#ea580c] font-mono text-[10px]">Page Object Class</span>
+                </div>
+                <span class="text-orange-700 font-semibold">import</span> type { Page, Locator } <span class="text-orange-700 font-semibold">from</span> <span class="text-emerald-700">'@playwright/test'</span>;<br><br>
+                <span class="text-orange-700 font-semibold">export class</span> <span class="text-stone-900 font-bold">LoginPage</span> {<br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">readonly</span> emailInput: Locator;<br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">readonly</span> passInput: Locator;<br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">readonly</span> submitBtn: Locator;<br><br>
+                &nbsp;&nbsp;constructor(<span class="text-orange-700 font-semibold">public</span> page: Page) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-orange-700 font-semibold">this</span>.emailInput = page.getByLabel(<span class="text-emerald-700">'Email Address'</span>);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-orange-700 font-semibold">this</span>.passInput = page.getByPlaceholder(<span class="text-emerald-700">'Enter password'</span>);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-orange-700 font-semibold">this</span>.submitBtn = page.getByRole(<span class="text-emerald-700">'button'</span>, { name: <span class="text-emerald-700">'Sign In'</span> });<br>
+                &nbsp;&nbsp;}<br><br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">async</span> login(email: string, pass: string) {<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-orange-700 font-semibold">this</span>.emailInput.fill(email);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-orange-700 font-semibold">this</span>.passInput.fill(pass);<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-orange-700 font-semibold">this</span>.submitBtn.click();<br>
+                &nbsp;&nbsp;}<br>
+                }
+              </div>
+
+              <!-- File 2: Test Spec calling Page Object -->
+              <div class="font-mono text-[11px] text-stone-800 bg-orange-50/30 rounded-xl p-3.5 border border-orange-100 overflow-x-auto leading-relaxed">
+                <div class="text-[10px] text-stone-400 mb-1.5 pb-1 border-b border-orange-100/60 font-sans flex items-center justify-between">
+                  <span class="font-medium text-stone-700">tests/login.spec.ts</span>
+                  <span class="text-emerald-700 font-mono text-[10px]">Test Scenario</span>
+                </div>
+                <span class="text-orange-700 font-semibold">import</span> { test, expect } <span class="text-orange-700 font-semibold">from</span> <span class="text-emerald-700">'@playwright/test'</span>;<br>
+                <span class="text-orange-700 font-semibold">import</span> { LoginPage } <span class="text-orange-700 font-semibold">from</span> <span class="text-emerald-700">'../pages/LoginPage.js'</span>;<br><br>
+                test(<span class="text-emerald-700">'User authenticates & verifies dashboard'</span>, <span class="text-orange-700 font-semibold">async</span> ({ page }) =&gt; {<br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">const</span> loginPage = <span class="text-orange-700 font-semibold">new</span> LoginPage(page);<br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> page.goto(<span class="text-emerald-700">'https://app.example.com/login'</span>);<br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> loginPage.login(<span class="text-emerald-700">'user@test.com'</span>, <span class="text-emerald-700">'secret123'</span>);<br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-purple-600 font-semibold">expect</span>(page).toHaveURL(<span class="text-emerald-700">/.*dashboard/</span>);<br>
+                &nbsp;&nbsp;<span class="text-orange-700 font-semibold">await</span> <span class="text-purple-600 font-semibold">expect</span>(page.getByRole(<span class="text-emerald-700">'alert'</span>)).toContainText(<span class="text-emerald-700">'Login successful'</span>);<br>
+                });
+              </div>
+            </div>
           </div>
 
           <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-600 font-medium">
-            <span>Result: Zero test flakes on refactors</span>
+            <span id="spec-result-text">Result: Zero test flakes on refactors</span>
             <i data-lucide="sparkles" class="w-4 h-4 text-[#ea580c]"></i>
           </div>
         </div>
@@ -717,7 +791,7 @@
           </div>
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-            <span class="text-xs text-stone-400 font-mono">Node.js 18+ (ESM)</span>
+            <span class="text-xs text-stone-400 font-mono">Node.js 20+ (ESM)</span>
           </div>
         </div>
 
@@ -728,7 +802,7 @@
           <div>
             <div class="text-stone-400 text-xs mb-1.5 flex items-center justify-between font-sans">
               <span>1. Run interactive generator (Zero install required):</span>
-              <button onclick="copySnippet('npx clickspec http://localhost:3000', 'btn-cp-1')" id="btn-cp-1" class="text-stone-400 hover:text-white transition text-[11px] inline-flex items-center gap-1">
+              <button onclick="copySnippet('npx clickspec http://localhost:3000', 'btn-cp-1')" id="btn-cp-1" class="text-stone-400 hover:text-white transition text-[11px] inline-flex items-center gap-1 cursor-pointer">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
               </button>
             </div>
@@ -737,16 +811,16 @@
             </div>
           </div>
 
-          <!-- Step 2: Custom output path -->
+          <!-- Step 2: Page Object Model mode -->
           <div>
             <div class="text-stone-400 text-xs mb-1.5 flex items-center justify-between font-sans">
-              <span>2. Or specify output file and test title:</span>
-              <button onclick="copySnippet('npx clickspec https://app.com -o ./tests/checkout.spec.ts --title &quot;Checkout Flow&quot;', 'btn-cp-2')" id="btn-cp-2" class="text-stone-400 hover:text-white transition text-[11px] inline-flex items-center gap-1">
+              <span>2. Or generate Page Object Model (POM) architecture:</span>
+              <button onclick="copySnippet('npx clickspec https://app.com --pom', 'btn-cp-2')" id="btn-cp-2" class="text-stone-400 hover:text-white transition text-[11px] inline-flex items-center gap-1 cursor-pointer">
                 <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
               </button>
             </div>
             <div class="bg-black/60 rounded-xl p-3.5 border border-stone-800 overflow-x-auto text-stone-300">
-              <span class="text-orange-400">npx clickspec</span> https://app.com <span class="text-stone-400">-o</span> ./tests/checkout.spec.ts <span class="text-stone-400">--title</span> <span class="text-emerald-400">"Checkout Flow"</span>
+              <span class="text-orange-400">npx clickspec</span> https://app.com <span class="text-emerald-400">--pom</span>
             </div>
           </div>
 
@@ -845,6 +919,30 @@
           }, 2000);
         }
       });
+    }
+
+    function switchSpecMode(mode) {
+      const stdView = document.getElementById('view-standard-spec');
+      const pomView = document.getElementById('view-pom-spec');
+      const stdBtn = document.getElementById('tab-btn-spec');
+      const pomBtn = document.getElementById('tab-btn-pom');
+      const resultText = document.getElementById('spec-result-text');
+
+      if (!stdView || !pomView || !stdBtn || !pomBtn) return;
+
+      if (mode === 'pom') {
+        stdView.classList.add('hidden');
+        pomView.classList.remove('hidden');
+        pomBtn.className = 'px-2.5 py-1 rounded-md transition-all bg-white text-orange-700 shadow-xs cursor-pointer';
+        stdBtn.className = 'px-2.5 py-1 rounded-md transition-all text-stone-500 hover:text-stone-900 cursor-pointer';
+        if (resultText) resultText.innerText = 'Result: Reusable Page Object Model with clean methods';
+      } else {
+        pomView.classList.add('hidden');
+        stdView.classList.remove('hidden');
+        stdBtn.className = 'px-2.5 py-1 rounded-md transition-all bg-white text-orange-700 shadow-xs cursor-pointer';
+        pomBtn.className = 'px-2.5 py-1 rounded-md transition-all text-stone-500 hover:text-stone-900 cursor-pointer';
+        if (resultText) resultText.innerText = 'Result: Zero test flakes on refactors';
+      }
     }
 
     // Interactive Centerpiece Flow Switcher
