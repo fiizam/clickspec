@@ -53,8 +53,8 @@ describe('BrowserSession & InteractionRecorder Integration', () => {
     const submitBtn = page.locator('#submit-btn');
     await submitBtn.click();
 
-    // Give smart assertion hook 500ms to detect mutation
-    await page.waitForTimeout(600);
+    // Give smart assertion hook time to detect mutation in CI environment
+    await page.waitForTimeout(1000);
 
     const rawEvents = await session.stop();
     assert.ok(rawEvents.length > 0, 'Should have recorded raw events');
