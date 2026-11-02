@@ -2,6 +2,7 @@
 
 CLI tool that records browser interactions and generates maintainable Playwright E2E tests with automatic assertions.
 
+[![CI](https://github.com/fiizam/clickspec/actions/workflows/ci.yml/badge.svg)](https://github.com/fiizam/clickspec/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-18%2B-2e7d32.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8%2B-3178c6.svg)](https://www.typescriptlang.org/)
