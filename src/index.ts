@@ -213,8 +213,6 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
         ? path.relative(process.cwd(), synthesisResult.pageObjectPath)
         : undefined
     );
-
-    p.outro(pc.bold(pc.green('All done! Happy testing.')));
   } catch (error: unknown) {
     s.stop(pc.red('Execution failed'));
     if (session) {

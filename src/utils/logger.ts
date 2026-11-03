@@ -83,21 +83,18 @@ export function printCompletionCard(
   modelName: string,
   pageObjectPath?: string
 ): void {
-  const line = '─'.repeat(60);
-  console.log('\n' + pc.cyan(line));
-  console.log(pc.bold(pc.green('  ✨ PLAYWRIGHT SPEC GENERATED SUCCESSFULLY')));
-  console.log(pc.cyan(line));
-  console.log(`  ${pc.bold('File:')}          ${pc.cyan(outputPath)}`);
-  if (pageObjectPath) {
-    console.log(`  ${pc.bold('Page Object:')}   ${pc.cyan(pageObjectPath)}`);
-    console.log(`  ${pc.bold('Pattern:')}       ${pc.magenta('Page Object Model (POM)')}`);
+  const normOutput = outputPath.replace(/\\/g, '/');
+  const normPO = pageObjectPath ? pageObjectPath.replace(/\\/g, '/') : undefined;
+
+  console.log('\n  ' + pc.green('✔') + ' ' + pc.bold('Spec generated successfully\n'));
+  console.log(`    ${pc.dim('Spec:')}        ${pc.cyan(normOutput)}`);
+  if (normPO) {
+    console.log(`    ${pc.dim('Page Object:')} ${pc.cyan(normPO)}`);
   }
-  console.log(`  ${pc.bold('Interactions:')}  ${pc.yellow(String(eventCount))} captured events synthesized`);
-  console.log(`  ${pc.bold('AI Model:')}      ${pc.magenta(modelName)}`);
-  console.log(pc.cyan(line));
-  console.log(pc.bold('  Run your new test:'));
-  console.log(`  ${pc.bgBlack(pc.green(` npx playwright test ${outputPath} --headed `))}`);
-  console.log(`  ${pc.dim(` npx playwright show-report`)}`);
-  console.log(pc.cyan(line) + '\n');
+  console.log(
+    `    ${pc.dim('Interactions:')} ${eventCount} actions synthesized (${pc.dim(modelName)})`
+  );
+  console.log('\n  ' + pc.dim('Next step:'));
+  console.log(`    ${pc.green(`npx playwright test ${normOutput} --headed`)}\n`);
 }
 
