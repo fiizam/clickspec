@@ -29,7 +29,7 @@ export function getAIProviderConfig(): AIProviderConfig {
     return {
       provider: 'gemini',
       apiKey: geminiKey,
-      model: process.env.CLICK_SPEC_MODEL || 'gemini-3.8-flash',
+      model: process.env.CLICK_SPEC_MODEL || 'gemini-3.5-flash',
     };
   }
 

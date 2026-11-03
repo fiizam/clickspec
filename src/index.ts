@@ -6,8 +6,15 @@ import { BrowserSession } from './core/browser.js';
 import { EventNormalizer } from './core/normalizer.js';
 import { synthesizePlaywrightTest } from './ai/synthesizer.js';
 import { getConfig, hasAIKeyConfigured } from './config.js';
-import { printBanner, printCompletionCard, logInfo, logWarn, logError } from './utils/logger.js';
+import { printBanner, printCompletionCard, logInfo, logSuccess, logWarn, logError } from './utils/logger.js';
 import type { RecordedEvent } from './types.js';
+
+function exitProcess(code = 0): void {
+  process.exitCode = code;
+  setImmediate(() => {
+    process.exit(code);
+  });
+}
 
 interface CliOptions {
   output?: string;
@@ -43,7 +50,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
 
     if (p.isCancel(enteredKey)) {
       p.cancel('Operation cancelled.');
-      process.exit(0);
+      exitProcess(0);
+      return;
     }
 
     if (enteredKey.startsWith('sk-')) {
@@ -69,7 +77,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
 
     if (p.isCancel(urlInput)) {
       p.cancel('Operation cancelled.');
-      process.exit(0);
+      exitProcess(0);
+      return;
     }
 
     targetUrl = urlInput.trim();
@@ -99,7 +108,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
 
     if (p.isCancel(outputInput)) {
       p.cancel('Operation cancelled.');
-      process.exit(0);
+      exitProcess(0);
+      return;
     }
 
     outputPath = outputInput.trim();
@@ -131,9 +141,12 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     });
 
     await session.navigate(targetUrl);
-    s.message(
-      pc.green(
-        `Recording interactions on ${targetUrl}... (Close window or press [Enter] here to finish)`
+    s.stop(pc.green(`Browser session active on ${targetUrl}`));
+    logInfo(
+      pc.bold(
+        pc.yellow(
+          `Recording interactions on ${targetUrl} (Close window or press [Enter] here to finish)`
+        )
       )
     );
 
@@ -142,11 +155,7 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
 
     // Ensure session is closed and get all final events
     const finalRawEvents = await session.stop();
-    s.stop(
-      pc.green(
-        `Recording completed! Captured ${finalRawEvents.length} raw browser events.`
-      )
-    );
+    logSuccess(`Recording completed! Captured ${finalRawEvents.length} raw browser events.`);
 
     if (finalRawEvents.length === 0) {
       logWarn('No user interactions were recorded during the session.');
@@ -189,7 +198,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     if (!synthesisResult.success) {
       synthSpinner.stop(pc.red('AI synthesis failed!'));
       logError(synthesisResult.error || 'Unknown AI error occurred.');
-      process.exit(1);
+      exitProcess(1);
+      return;
     }
 
     synthSpinner.stop(pc.green('Playwright test synthesized successfully!'));
@@ -212,7 +222,7 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     }
     const message = error instanceof Error ? error.message : String(error);
     logError(`An error occurred: ${message}`, error);
-    process.exit(1);
+    exitProcess(1);
   }
 }
 
@@ -228,7 +238,6 @@ function waitForTerminationSignal(session: BrowserSession): Promise<void> {
         if (process.stdin.isTTY) {
           process.stdin.setRawMode(false);
         }
-        process.stdin.pause();
         process.stdin.removeListener('data', onData);
       } catch {
         // Ignore terminal teardown issues
@@ -246,7 +255,7 @@ function waitForTerminationSignal(session: BrowserSession): Promise<void> {
         // Ctrl+C
         cleanup();
         p.cancel('Cancelled by user.');
-        process.exit(0);
+        exitProcess(0);
       }
     };
 
@@ -291,7 +300,7 @@ program
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       logError(message);
-      process.exit(1);
+      exitProcess(1);
     }
   });
 

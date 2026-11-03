@@ -27,7 +27,7 @@ describe('AI Client & Config', () => {
     const client = createAIClient();
 
     assert.equal(client.provider, 'gemini');
-    assert.equal(client.model, 'gemini-3.8-flash');
+    assert.equal(client.model, 'gemini-3.5-flash');
 
     delete process.env.GEMINI_API_KEY;
   });
