@@ -73,7 +73,9 @@ Follow these strict engineering rules:
 1. LOCATOR STRATEGY & RESILIENCE:
    - Use user-facing accessible locators inside the Page Object class:
      page.getByRole(), page.getByLabel(), page.getByPlaceholder(), page.getByText(), page.getByTestId().
+   - For page.getByRole('heading', { name: ... }), always ensure spaces between words are preserved, and add { exact: true } for short or generic words (e.g. { name: 'Experience', exact: true }) to prevent Playwright strict-mode collisions.
    - Never use fragile CSS paths like div > div:nth-child(3).
+   - Keep assertions high-signal and focused (1-3 key assertions per step, never assert dozens of background headings).
 
 2. PAGE OBJECT CLASS STRUCTURE:
    - Export a class that receives 'page: Page' in its constructor.

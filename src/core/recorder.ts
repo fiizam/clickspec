@@ -18,6 +18,28 @@ export const IN_PAGE_OBSERVER_CODE = `
     return trimmed.length > limit ? trimmed.slice(0, limit) + '...' : trimmed;
   }
 
+  function getReadableText(el, maxLen) {
+    if (!el) return '';
+    let text = '';
+    if (typeof el.innerText === 'string' && el.innerText.trim()) {
+      text = el.innerText;
+    } else {
+      const nodes = el.childNodes || [];
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        if (n.nodeType === 3) {
+          text += (n.textContent || '') + ' ';
+        } else if (n.nodeType === 1) {
+          text += (n.innerText || n.textContent || '') + ' ';
+        }
+      }
+      if (!text.trim()) text = el.textContent || '';
+    }
+    const trimmed = text.replace(/\\s+/g, ' ').trim();
+    const limit = maxLen || 50;
+    return trimmed.length > limit ? trimmed.slice(0, limit) + '...' : trimmed;
+  }
+
   function resolveAccessibleRole(el) {
     const explicitRole = el.getAttribute('role');
     if (explicitRole) return explicitRole.toLowerCase();
@@ -73,7 +95,7 @@ export const IN_PAGE_OBSERVER_CODE = `
     const role = resolveAccessibleRole(el);
     const label = resolveAccessibleLabel(el);
     const placeholder = el.getAttribute('placeholder') || undefined;
-    const textContent = safeTrim(el.innerText || el.textContent || '');
+    const textContent = getReadableText(el, 60);
     const id = el.id || undefined;
     const name = el.getAttribute('name') || undefined;
     const type = el.getAttribute('type') || undefined;
@@ -137,7 +159,7 @@ export const IN_PAGE_OBSERVER_CODE = `
     );
     for (let i = 0; i < alertElements.length; i++) {
       const el = alertElements[i];
-      const text = safeTrim(el.innerText || el.textContent || '', 80);
+      const text = getReadableText(el, 80);
       if (text) {
         candidates.push({
           kind: 'toast_or_alert',
@@ -148,13 +170,14 @@ export const IN_PAGE_OBSERVER_CODE = `
       }
     }
 
-    // Check for headings
-    const headings = document.querySelectorAll('h1, h2, h3');
-    for (let i = 0; i < headings.length; i++) {
+    // Check for prominent visible headings (in viewport, limit to top 3)
+    const headings = document.querySelectorAll('h1, h2');
+    let capturedHeadings = 0;
+    for (let i = 0; i < headings.length && capturedHeadings < 3; i++) {
       const el = headings[i];
       const rect = el.getBoundingClientRect();
-      if (rect.width > 0 && rect.height > 0) {
-        const text = safeTrim(el.innerText || el.textContent || '', 50);
+      if (rect.width > 0 && rect.height > 0 && rect.top >= 0 && rect.top <= win.innerHeight) {
+        const text = getReadableText(el, 50);
         if (text) {
           candidates.push({
             kind: 'heading_change',
@@ -162,6 +185,7 @@ export const IN_PAGE_OBSERVER_CODE = `
             element: snapshotElement(el),
             expectedValue: text,
           });
+          capturedHeadings++;
         }
       }
     }
