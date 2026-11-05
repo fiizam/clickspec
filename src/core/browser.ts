@@ -1,4 +1,4 @@
-import { chromium, type Browser, type BrowserContext, type Page } from 'playwright';
+import { chromium, devices, type Browser, type BrowserContext, type Page } from 'playwright';
 import { InteractionRecorder } from './recorder.js';
 import type { BrowserSessionOptions, RecordedEvent } from '../types.js';
 
@@ -22,14 +22,28 @@ export class BrowserSession {
   }
 
   private async initialize(): Promise<void> {
+    const isMobile = Boolean(this.options.mobile || this.options.deviceName);
+    const selectedDeviceName = this.options.deviceName || (isMobile ? 'Pixel 7' : undefined);
+    const devicePreset = selectedDeviceName ? devices[selectedDeviceName] || devices['Pixel 7'] : null;
+
+    const launchArgs = [
+      '--disable-blink-features=AutomationControlled',
+      '--no-sandbox',
+    ];
+
+    if (devicePreset && devicePreset.viewport) {
+      // In mobile emulation, set a mobile phone window size with standard frame padding
+      const winW = devicePreset.viewport.width + 100;
+      const winH = devicePreset.viewport.height + 150;
+      launchArgs.push(`--window-size=${winW},${winH}`);
+    } else {
+      launchArgs.push('--start-maximized');
+    }
+
     try {
       this.browser = await chromium.launch({
         headless: this.options.headless ?? false,
-        args: [
-          '--disable-blink-features=AutomationControlled',
-          '--no-sandbox',
-          '--start-maximized',
-        ],
+        args: launchArgs,
       });
     } catch (launchError: unknown) {
       const msg = launchError instanceof Error ? launchError.message : String(launchError);
@@ -41,13 +55,15 @@ export class BrowserSession {
       throw launchError;
     }
 
-    const defaultViewport = this.options.viewport ?? { width: 1280, height: 800 };
+    const contextOptions = devicePreset
+      ? { ...devicePreset }
+      : {
+          viewport: this.options.viewport ?? { width: 1280, height: 800 },
+          userAgent:
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 clickspec/1.0',
+        };
 
-    this.context = await this.browser.newContext({
-      viewport: defaultViewport,
-      userAgent:
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 clickspec/1.0',
-    });
+    this.context = await this.browser.newContext(contextOptions);
 
     this.page = await this.context.newPage();
 

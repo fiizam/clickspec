@@ -26,6 +26,8 @@ interface CliOptions {
   pom?: boolean;
   pagePath?: string;
   run?: boolean;
+  mobile?: boolean;
+  device?: string;
 }
 
 async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<void> {
@@ -118,11 +120,14 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
   }
 
   // 4. Launch Browser Recording Session
+  const isMobile = Boolean(options.mobile || options.device);
+  const deviceName = options.device || (isMobile ? 'Pixel 7' : undefined);
+
   const config = getConfig();
   const s = p.spinner();
   s.start(
     pc.cyan(
-      `Launching browser at ${targetUrl}... (Close browser or press Enter in terminal when done)`
+      `Launching browser${isMobile ? ` in mobile emulation mode (${deviceName})` : ''} at ${targetUrl}... (Close browser or press Enter in terminal when done)`
     )
   );
 
@@ -133,7 +138,9 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     session = await BrowserSession.launch({
       targetUrl,
       headless: options.headless ?? false,
-      viewport: config.defaultViewport,
+      viewport: isMobile ? undefined : config.defaultViewport,
+      mobile: isMobile,
+      deviceName,
       onEvent: (evt) => {
         recordedEvents.push(evt);
         if (options.debug) {
@@ -143,7 +150,11 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     });
 
     await session.navigate(targetUrl);
-    s.stop(pc.green(`Browser session active on ${targetUrl}`));
+    s.stop(
+      pc.green(
+        `Browser session active on ${targetUrl}${isMobile ? ` [${deviceName} mobile profile]` : ''}`
+      )
+    );
     logInfo(
       pc.bold(
         pc.yellow(
@@ -174,7 +185,10 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
 
     // 5. Event Normalization & Deduplication
     const normalizer = new EventNormalizer();
-    const sequence = normalizer.normalize(finalRawEvents, targetUrl);
+    const sequence = normalizer.normalize(finalRawEvents, targetUrl, {
+      deviceName,
+      isMobile,
+    });
 
     if (options.debug) {
       logInfo(
@@ -195,6 +209,7 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
       debug: options.debug,
       pom: options.pom,
       pageObjectPath: options.pagePath,
+      deviceName,
     });
 
     if (!synthesisResult.success) {
@@ -213,7 +228,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
       synthesisResult.modelUsed,
       synthesisResult.pageObjectPath
         ? path.relative(process.cwd(), synthesisResult.pageObjectPath)
-        : undefined
+        : undefined,
+      deviceName
     );
 
     // 8. Auto-Run or Interactive Prompt
@@ -331,6 +347,8 @@ program
   .option('--pom', 'Generate structured Page Object Model (POM) classes and spec')
   .option('--page-path <path>', 'Custom destination path for Page Object class (used with --pom)')
   .option('-r, --run', 'Automatically run the generated test with Playwright after synthesis')
+  .option('--mobile', 'Emulate a mobile smartphone viewport and touch screen (default: Pixel 7)')
+  .option('--device <name>', 'Emulate a specific Playwright device profile (e.g. "Pixel 7", "iPhone 14")')
   .option('--headless', 'Run browser in headless mode')
   .option('--debug', 'Enable verbose debug logging')
   .action(async (url?: string, options?: CliOptions) => {

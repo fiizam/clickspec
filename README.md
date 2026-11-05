@@ -121,6 +121,8 @@ clickspec [url] [options]
 | `--pom` | - | Generate structured Page Object Model (POM) classes and spec | `false` |
 | `--page-path <path>` | - | Destination path for Page Object class (used with `--pom`) | `./pages/<Page>.ts` |
 | `--run` | `-r` | Automatically execute generated test with Playwright | Prompts interactively |
+| `--mobile` | - | Emulate a mobile smartphone viewport and touch screen | `false` (Desktop) |
+| `--device <name>` | - | Emulate a specific Playwright device (e.g. "Pixel 7", "iPhone 14") | `Pixel 7` when mobile |
 | `--model <name>` | `-m` | AI model override | `gemini-3.8-flash` |
 | `--title <title>` | - | Explicit test case title | Inferred from journey |
 | `--headless` | - | Run browser without UI (useful for CI scripts) | `false` |
@@ -141,6 +143,12 @@ npm run dev -- https://my-app.com/login --pom -o ./tests/login.spec.ts --page-pa
 
 # Record and immediately execute test
 npm run dev -- https://my-app.com/login --run
+
+# Record using mobile device emulation (defaults to Pixel 7)
+npm run dev -- https://my-app.com --mobile
+
+# Record with a specific device profile (e.g. iPhone 14)
+npm run dev -- https://my-app.com --device "iPhone 14"
 
 # Set a custom test title
 npm run dev -- https://my-app.com --title "User Registration Journey"

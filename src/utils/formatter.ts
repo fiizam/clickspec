@@ -6,9 +6,13 @@ export interface FormatResult {
 
 /**
  * Strips markdown code blocks, normalizes indentation, and ensures
- * valid Playwright test structure.
+ * valid Playwright test structure. Supports mobile device emulation injection.
  */
-export function formatGeneratedTest(rawCode: string, testTitle = 'generated e2e flow'): FormatResult {
+export function formatGeneratedTest(
+  rawCode: string,
+  testTitle = 'generated e2e flow',
+  deviceName?: string
+): FormatResult {
   const warnings: string[] = [];
 
   if (!rawCode || typeof rawCode !== 'string') {
@@ -32,15 +36,34 @@ export function formatGeneratedTest(rawCode: string, testTitle = 'generated e2e 
     code = `import { test, expect } from '@playwright/test';\n\n${code}`;
   }
 
+  // Handle device emulation for mobile mode
+  if (deviceName) {
+    if (!/\bdevices\b/.test(code)) {
+      code = code.replace(
+        /import\s*\{\s*([^}]+)\s*\}\s*from\s*(['"])@playwright\/test\2/,
+        (_match, imports, quote) => {
+          const cleanImports = imports.trim();
+          return `import { ${cleanImports}, devices } from ${quote}@playwright/test${quote}`;
+        }
+      );
+    }
+
+    if (!code.includes('test.use(')) {
+      const testIdx = code.search(/\btest(?:\.describe)?\s*\(/);
+      const useBlock = `test.use({\n  ...devices['${deviceName}'],\n});\n\n`;
+      if (testIdx !== -1) {
+        code = code.slice(0, testIdx) + useBlock + code.slice(testIdx);
+      } else {
+        code = `${useBlock}${code}`;
+      }
+    }
+  }
+
   // Ensure test() or test.describe() exists
   if (!code.includes('test(') && !code.includes('test.describe(')) {
     warnings.push('Code was not wrapped in test block; wrapping inside test(...) block.');
-    code = `import { test, expect } from '@playwright/test';
-
-test('${testTitle.replace(/'/g, "\\'")}', async ({ page }) => {
-${indentCode(code, 2)}
-});
-`;
+    const useSnippet = deviceName ? `test.use({\n  ...devices['${deviceName}'],\n});\n\n` : '';
+    code = `import { test, expect${deviceName ? ', devices' : ''} } from '@playwright/test';\n\n${useSnippet}test('${testTitle.replace(/'/g, "\\'")}', async ({ page }) => {\n${indentCode(code, 2)}\n});\n`;
   }
 
   // Basic syntax balance verification
@@ -98,7 +121,8 @@ export function formatPOMResult(
   rawOutput: string,
   pageClassName = 'FlowPage',
   relativeImportPath = '../pages/FlowPage.js',
-  testTitle = 'generated e2e flow'
+  testTitle = 'generated e2e flow',
+  deviceName?: string
 ): POMFormatResult {
   const warnings: string[] = [];
 
@@ -154,7 +178,7 @@ export function formatPOMResult(
     specCode = `import { ${pageClassName} } from '${relativeImportPath}';\n${specCode}`;
   }
 
-  const formattedSpec = formatGeneratedTest(specCode, testTitle);
+  const formattedSpec = formatGeneratedTest(specCode, testTitle, deviceName);
   warnings.push(...formattedSpec.warnings);
 
   return {

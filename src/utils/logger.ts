@@ -81,7 +81,8 @@ export function printCompletionCard(
   outputPath: string,
   eventCount: number,
   modelName: string,
-  pageObjectPath?: string
+  pageObjectPath?: string,
+  deviceName?: string
 ): void {
   const normOutput = outputPath.replace(/\\/g, '/');
   const normPO = pageObjectPath ? pageObjectPath.replace(/\\/g, '/') : undefined;
@@ -90,6 +91,9 @@ export function printCompletionCard(
   console.log(`    ${pc.dim('Spec:')}        ${pc.cyan(normOutput)}`);
   if (normPO) {
     console.log(`    ${pc.dim('Page Object:')} ${pc.cyan(normPO)}`);
+  }
+  if (deviceName) {
+    console.log(`    ${pc.dim('Device:')}      ${pc.magenta(`${deviceName} (Mobile Emulation)`)}`);
   }
   console.log(
     `    ${pc.dim('Interactions:')} ${eventCount} actions synthesized (${pc.dim(modelName)})`

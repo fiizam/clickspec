@@ -53,7 +53,8 @@ export async function synthesizePlaywrightTest(
         sequence,
         pageClassName,
         relativeImport,
-        options.testTitle
+        options.testTitle,
+        options.deviceName
       );
 
       if (options.debug) {
@@ -65,7 +66,8 @@ export async function synthesizePlaywrightTest(
         rawResponse,
         pageClassName,
         relativeImport,
-        options.testTitle || `Journey for ${options.url}`
+        options.testTitle || `Journey for ${options.url}`,
+        options.deviceName
       );
 
       if (formatted.warnings.length > 0 && options.debug) {
@@ -89,6 +91,7 @@ export async function synthesizePlaywrightTest(
         isPom: true,
         pageObjectPath: absolutePOPath,
         pageObjectCode: formatted.pageObjectCode,
+        deviceName: options.deviceName,
         modelUsed: `${aiClient.provider}:${aiClient.model}`,
         stats: {
           rawEventsCount,
@@ -101,7 +104,7 @@ export async function synthesizePlaywrightTest(
     // ==========================================
     // 2. STANDARD FLAT SPEC SYNTHESIS FLOW
     // ==========================================
-    const userPrompt = buildSynthesisUserPrompt(sequence, options.testTitle);
+    const userPrompt = buildSynthesisUserPrompt(sequence, options.testTitle, options.deviceName);
 
     if (options.debug) {
       logInfo(`DEBUG: User prompt payload length: ${userPrompt.length} chars`);
@@ -109,7 +112,11 @@ export async function synthesizePlaywrightTest(
 
     const rawResponse = await aiClient.generateText(SYSTEM_PROMPT, userPrompt);
 
-    const formatted = formatGeneratedTest(rawResponse, options.testTitle || `Journey for ${options.url}`);
+    const formatted = formatGeneratedTest(
+      rawResponse,
+      options.testTitle || `Journey for ${options.url}`,
+      options.deviceName
+    );
 
     if (formatted.warnings.length > 0 && options.debug) {
       for (const warning of formatted.warnings) {
@@ -128,6 +135,7 @@ export async function synthesizePlaywrightTest(
       code: formatted.code,
       outputPath: absoluteOutputPath,
       isPom: false,
+      deviceName: options.deviceName,
       modelUsed: `${aiClient.provider}:${aiClient.model}`,
       stats: {
         rawEventsCount,

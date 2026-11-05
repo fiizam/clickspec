@@ -199,6 +199,19 @@ describe('formatGeneratedTest', () => {
     assert.match(result.code, /test\('Auto-generated Flow'/);
     assert.match(result.code, /await page\.getByRole\('button'\)\.click\(\);/);
   });
+
+  it('should inject devices import and test.use when deviceName is provided', () => {
+    const rawCode = `import { test, expect } from '@playwright/test';
+
+test('Mobile Test', async ({ page }) => {
+  await page.goto('https://example.com');
+});`;
+    const result = formatGeneratedTest(rawCode, 'Mobile Test', 'Pixel 7');
+
+    assert.equal(result.isValid, true);
+    assert.match(result.code, /import\s*\{[^}]*devices[^}]*\}\s*from\s*['"]@playwright\/test['"]/);
+    assert.match(result.code, /test\.use\(\{\s*\.\.\.devices\['Pixel 7'\],?\s*\}\);/);
+  });
 });
 
 describe('buildSynthesisUserPrompt', () => {
@@ -325,6 +338,28 @@ test('Order flow', async ({ page }) => {
     const result = formatPOMResult('');
     assert.equal(result.isValid, false);
     assert.equal(result.warnings.length > 0, true);
+  });
+
+  it('should inject device emulation into POM spec when deviceName is provided', () => {
+    const rawPOM = `
+<<<PAGE_OBJECT>>>
+export class MobilePage {
+  readonly page: Page;
+}
+<<<END_PAGE_OBJECT>>>
+<<<SPEC>>>
+import { test, expect } from '@playwright/test';
+import { MobilePage } from '../pages/MobilePage.js';
+
+test('Mobile POM Journey', async ({ page }) => {
+  await page.goto('https://example.com');
+});
+<<<END_SPEC>>>
+`;
+    const result = formatPOMResult(rawPOM, 'MobilePage', '../pages/MobilePage.js', 'Mobile POM Journey', 'Pixel 7');
+    assert.equal(result.isValid, true);
+    assert.match(result.specCode, /import\s*\{[^}]*devices[^}]*\}\s*from\s*['"]@playwright\/test['"]/);
+    assert.match(result.specCode, /test\.use\(\{\s*\.\.\.devices\['Pixel 7'\],?\s*\}\);/);
   });
 });
 

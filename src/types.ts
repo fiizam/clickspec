@@ -98,6 +98,8 @@ export interface InteractionSequence {
     normalizedCount: number;
     userAgent?: string;
     viewport?: { width: number; height: number };
+    deviceName?: string;
+    isMobile?: boolean;
   };
 }
 
@@ -116,6 +118,7 @@ export interface TestSynthesisOptions {
   debug?: boolean;
   pom?: boolean;
   pageObjectPath?: string;
+  deviceName?: string;
 }
 
 export interface TestSynthesisResult {
@@ -131,6 +134,7 @@ export interface TestSynthesisResult {
   isPom?: boolean;
   pageObjectPath?: string;
   pageObjectCode?: string;
+  deviceName?: string;
   error?: string;
 }
 
@@ -140,5 +144,7 @@ export interface BrowserSessionOptions {
   viewport?: { width: number; height: number };
   onEvent?: (event: RecordedEvent) => void;
   onStatusChange?: (status: string) => void;
+  mobile?: boolean;
+  deviceName?: string;
 }
 
