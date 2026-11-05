@@ -212,6 +212,19 @@ test('Mobile Test', async ({ page }) => {
     assert.match(result.code, /import\s*\{[^}]*devices[^}]*\}\s*from\s*['"]@playwright\/test['"]/);
     assert.match(result.code, /test\.use\(\{\s*\.\.\.devices\['Pixel 7'\],[\s\S]*defaultBrowserType:\s*'chromium'/);
   });
+
+  it('should inject toHaveScreenshot assertion when visual option is true', () => {
+    const rawCode = `import { test, expect } from '@playwright/test';
+
+test('Visual Test', async ({ page }) => {
+  await page.goto('https://example.com');
+  await expect(page.getByRole('heading')).toBeVisible();
+});`;
+    const result = formatGeneratedTest(rawCode, 'Visual Test', undefined, true);
+
+    assert.equal(result.isValid, true);
+    assert.match(result.code, /toHaveScreenshot\(\{\s*maxDiffPixelRatio:\s*0\.05\s*\}\)/);
+  });
 });
 
 describe('buildSynthesisUserPrompt', () => {

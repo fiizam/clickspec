@@ -11,7 +11,8 @@ export interface FormatResult {
 export function formatGeneratedTest(
   rawCode: string,
   testTitle = 'generated e2e flow',
-  deviceName?: string
+  deviceName?: string,
+  visual?: boolean
 ): FormatResult {
   const warnings: string[] = [];
 
@@ -65,13 +66,29 @@ export function formatGeneratedTest(
     }
   }
 
+  // Handle visual regression testing assertion
+  if (visual && !code.includes('toHaveScreenshot')) {
+    const gotoMatch = code.match(/(?:await\s+page\.goto\([^)]+\);?|await\s+\w+\.goto\([^)]*\);?)/);
+    const visualAssertion = `\n\n  // Verify visual appearance matches baseline\n  await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });`;
+    if (gotoMatch && gotoMatch.index !== undefined) {
+      const insertPos = gotoMatch.index + gotoMatch[0].length;
+      code = code.slice(0, insertPos) + visualAssertion + code.slice(insertPos);
+    } else {
+      const lastBraceIdx = code.lastIndexOf('});');
+      if (lastBraceIdx !== -1) {
+        code = code.slice(0, lastBraceIdx) + visualAssertion + '\n' + code.slice(lastBraceIdx);
+      }
+    }
+  }
+
   // Ensure test() or test.describe() exists
   if (!code.includes('test(') && !code.includes('test.describe(')) {
     warnings.push('Code was not wrapped in test block; wrapping inside test(...) block.');
     const useSnippet = deviceName
       ? `test.use({\n  ...devices['${deviceName}'],\n  defaultBrowserType: 'chromium',\n});\n\n`
       : '';
-    code = `import { test, expect${deviceName ? ', devices' : ''} } from '@playwright/test';\n\n${useSnippet}test('${testTitle.replace(/'/g, "\\'")}', async ({ page }) => {\n${indentCode(code, 2)}\n});\n`;
+    const visualSnippet = visual ? `\n  await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });` : '';
+    code = `import { test, expect${deviceName ? ', devices' : ''} } from '@playwright/test';\n\n${useSnippet}test('${testTitle.replace(/'/g, "\\'")}', async ({ page }) => {\n${indentCode(code, 2)}${visualSnippet}\n});\n`;
   }
 
   // Basic syntax balance verification
@@ -130,7 +147,8 @@ export function formatPOMResult(
   pageClassName = 'FlowPage',
   relativeImportPath = '../pages/FlowPage.js',
   testTitle = 'generated e2e flow',
-  deviceName?: string
+  deviceName?: string,
+  visual?: boolean
 ): POMFormatResult {
   const warnings: string[] = [];
 
@@ -186,7 +204,7 @@ export function formatPOMResult(
     specCode = `import { ${pageClassName} } from '${relativeImportPath}';\n${specCode}`;
   }
 
-  const formattedSpec = formatGeneratedTest(specCode, testTitle, deviceName);
+  const formattedSpec = formatGeneratedTest(specCode, testTitle, deviceName, visual);
   warnings.push(...formattedSpec.warnings);
 
   return {

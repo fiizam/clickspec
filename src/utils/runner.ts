@@ -7,11 +7,13 @@ import { logError } from './logger.js';
 
 export interface ExecuteTestOptions {
   headless?: boolean;
+  updateSnapshots?: boolean;
   cwd?: string;
 }
 
 export interface TestPickerOptions {
   headless?: boolean;
+  updateSnapshots?: boolean;
   all?: boolean;
   cwd?: string;
 }
@@ -26,6 +28,10 @@ export function buildPlaywrightArgs(specPath: string, options: ExecuteTestOption
 
   if (!options.headless) {
     args.push('--headed');
+  }
+
+  if (options.updateSnapshots) {
+    args.push('--update-snapshots');
   }
 
   return args;
@@ -139,7 +145,11 @@ export async function runInteractiveTestPicker(
 
   // If a direct spec target was supplied (e.g. clickspec test tests/porto.spec.ts)
   if (specTarget) {
-    const { success } = await executePlaywrightTest(specTarget, { headless: options.headless, cwd: rootDir });
+    const { success } = await executePlaywrightTest(specTarget, {
+      headless: options.headless,
+      updateSnapshots: options.updateSnapshots,
+      cwd: rootDir,
+    });
     if (process.stdin.isTTY) {
       const viewReport = await p.confirm({
         message: 'Open HTML test report in browser?',
@@ -154,7 +164,11 @@ export async function runInteractiveTestPicker(
 
   // If --all was passed, run all tests in tests/
   if (options.all) {
-    const { success } = await executePlaywrightTest('tests', { headless: options.headless, cwd: rootDir });
+    const { success } = await executePlaywrightTest('tests', {
+      headless: options.headless,
+      updateSnapshots: options.updateSnapshots,
+      cwd: rootDir,
+    });
     if (process.stdin.isTTY) {
       const viewReport = await p.confirm({
         message: 'Open HTML test report in browser?',
@@ -205,7 +219,11 @@ export async function runInteractiveTestPicker(
   }
 
   const targetPath = selected === 'ALL' ? 'tests' : (selected as string);
-  const { success } = await executePlaywrightTest(targetPath, { headless: options.headless, cwd: rootDir });
+  const { success } = await executePlaywrightTest(targetPath, {
+    headless: options.headless,
+    updateSnapshots: options.updateSnapshots,
+    cwd: rootDir,
+  });
 
   if (process.stdin.isTTY) {
     const viewReport = await p.confirm({

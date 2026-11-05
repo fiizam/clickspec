@@ -100,6 +100,7 @@ export interface InteractionSequence {
     viewport?: { width: number; height: number };
     deviceName?: string;
     isMobile?: boolean;
+    visual?: boolean;
   };
 }
 
@@ -119,6 +120,7 @@ export interface TestSynthesisOptions {
   pom?: boolean;
   pageObjectPath?: string;
   deviceName?: string;
+  visual?: boolean;
 }
 
 export interface TestSynthesisResult {
@@ -135,6 +137,7 @@ export interface TestSynthesisResult {
   pageObjectPath?: string;
   pageObjectCode?: string;
   deviceName?: string;
+  visual?: boolean;
   error?: string;
 }
 

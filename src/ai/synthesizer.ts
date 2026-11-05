@@ -54,7 +54,8 @@ export async function synthesizePlaywrightTest(
         pageClassName,
         relativeImport,
         options.testTitle,
-        options.deviceName
+        options.deviceName,
+        options.visual
       );
 
       if (options.debug) {
@@ -67,7 +68,8 @@ export async function synthesizePlaywrightTest(
         pageClassName,
         relativeImport,
         options.testTitle || `Journey for ${options.url}`,
-        options.deviceName
+        options.deviceName,
+        options.visual
       );
 
       if (formatted.warnings.length > 0 && options.debug) {
@@ -92,6 +94,7 @@ export async function synthesizePlaywrightTest(
         pageObjectPath: absolutePOPath,
         pageObjectCode: formatted.pageObjectCode,
         deviceName: options.deviceName,
+        visual: options.visual,
         modelUsed: `${aiClient.provider}:${aiClient.model}`,
         stats: {
           rawEventsCount,
@@ -104,7 +107,12 @@ export async function synthesizePlaywrightTest(
     // ==========================================
     // 2. STANDARD FLAT SPEC SYNTHESIS FLOW
     // ==========================================
-    const userPrompt = buildSynthesisUserPrompt(sequence, options.testTitle, options.deviceName);
+    const userPrompt = buildSynthesisUserPrompt(
+      sequence,
+      options.testTitle,
+      options.deviceName,
+      options.visual
+    );
 
     if (options.debug) {
       logInfo(`DEBUG: User prompt payload length: ${userPrompt.length} chars`);
@@ -115,7 +123,8 @@ export async function synthesizePlaywrightTest(
     const formatted = formatGeneratedTest(
       rawResponse,
       options.testTitle || `Journey for ${options.url}`,
-      options.deviceName
+      options.deviceName,
+      options.visual
     );
 
     if (formatted.warnings.length > 0 && options.debug) {
@@ -136,6 +145,7 @@ export async function synthesizePlaywrightTest(
       outputPath: absoluteOutputPath,
       isPom: false,
       deviceName: options.deviceName,
+      visual: options.visual,
       modelUsed: `${aiClient.provider}:${aiClient.model}`,
       stats: {
         rawEventsCount,

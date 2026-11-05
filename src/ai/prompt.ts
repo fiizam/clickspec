@@ -41,19 +41,23 @@ Follow these strict engineering rules:
 export function buildSynthesisUserPrompt(
   sequence: InteractionSequence,
   testTitle?: string,
-  deviceName?: string
+  deviceName?: string,
+  visual?: boolean
 ): string {
   const title = testTitle || `E2E Journey on ${sequence.initialUrl}`;
   const eventsJson = JSON.stringify(sequence.events, null, 2);
   const deviceRequirement = deviceName
     ? `\n- Mobile Emulation: Emulate the '${deviceName}' mobile device profile. Include: import { test, expect, devices } from '@playwright/test'; and test.use({ ...devices['${deviceName}'], defaultBrowserType: 'chromium' });`
     : '';
+  const visualRequirement = visual
+    ? '\n- Visual Regression: Add visual regression assertions `await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });` after initial page navigation and after any major UI state changes.'
+    : '';
 
   return `Synthesize a robust Playwright E2E test script in TypeScript based on the recorded session below.
 
 Test Title: "${title}"
 Initial Target URL: ${sequence.initialUrl}
-Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)${deviceName ? `\nEmulated Mobile Device: ${deviceName}` : ''}
+Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)${deviceName ? `\nEmulated Mobile Device: ${deviceName}` : ''}${visual ? '\nVisual Regression: Enabled' : ''}
 
 --- RECORDED INTERACTION SEQUENCE (JSON) ---
 ${eventsJson}
@@ -62,7 +66,7 @@ ${eventsJson}
 Requirements:
 - Start the test at the initial URL: \`await page.goto('${sequence.initialUrl}');\`
 - Map every user action to resilient Playwright locators (getByRole, getByLabel, getByPlaceholder, getByText).
-- Add smart assertions for URL transitions, submitted data, and high-signal alert/toast/heading DOM changes.${deviceRequirement}
+- Add smart assertions for URL transitions, submitted data, and high-signal alert/toast/heading DOM changes.${deviceRequirement}${visualRequirement}
 - Return ONLY the executable TypeScript test code.`;
 }
 
@@ -119,12 +123,16 @@ export function buildPOMSynthesisUserPrompt(
   pageClassName: string,
   relativeImportPath: string,
   testTitle?: string,
-  deviceName?: string
+  deviceName?: string,
+  visual?: boolean
 ): string {
   const title = testTitle || `E2E POM Journey on ${sequence.initialUrl}`;
   const eventsJson = JSON.stringify(sequence.events, null, 2);
   const deviceRequirement = deviceName
     ? `\n- Mobile Emulation: The Spec file must emulate the '${deviceName}' mobile device profile. Include: import { test, expect, devices } from '@playwright/test'; and test.use({ ...devices['${deviceName}'], defaultBrowserType: 'chromium' });`
+    : '';
+  const visualRequirement = visual
+    ? '\n- Visual Regression: The Spec file must assert visual appearance using `await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });` after initial page load and after major transitions.'
     : '';
 
   return `Synthesize a Playwright Page Object Model architecture based on the recorded session below.
@@ -133,7 +141,7 @@ Test Title: "${title}"
 Initial Target URL: ${sequence.initialUrl}
 Page Class Name: ${pageClassName}
 Relative Import Path for Spec: "${relativeImportPath}"
-Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)${deviceName ? `\nEmulated Mobile Device: ${deviceName}` : ''}
+Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)${deviceName ? `\nEmulated Mobile Device: ${deviceName}` : ''}${visual ? '\nVisual Regression: Enabled' : ''}
 
 --- RECORDED INTERACTION SEQUENCE (JSON) ---
 ${eventsJson}
@@ -142,7 +150,7 @@ ${eventsJson}
 Requirements:
 - Structure the Page Object with reusable locator properties and high-level action methods.
 - The Spec file must import the Page Object using: import { ${pageClassName} } from '${relativeImportPath}';
-- Include smart assertions for URL transitions and DOM alert/toast mutations.${deviceRequirement}
+- Include smart assertions for URL transitions and DOM alert/toast mutations.${deviceRequirement}${visualRequirement}
 - Output strictly using <<<PAGE_OBJECT>>>...<<<END_PAGE_OBJECT>>> and <<<SPEC>>>...<<<END_SPEC>>> tags.`;
 }
 

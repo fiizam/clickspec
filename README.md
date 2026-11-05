@@ -123,6 +123,7 @@ clickspec [url] [options]
 | `--run` | `-r` | Automatically execute generated test with Playwright | Prompts interactively |
 | `--mobile` | - | Emulate a mobile smartphone viewport and touch screen | `false` (Desktop) |
 | `--device <name>` | - | Emulate a specific Playwright device (e.g. "Pixel 7", "iPhone 14") | `Pixel 7` when mobile |
+| `--visual` | - | Include visual regression screenshot assertions (`toHaveScreenshot`) | `false` |
 | `--model <name>` | `-m` | AI model override | `gemini-3.8-flash` |
 | `--title <title>` | - | Explicit test case title | Inferred from journey |
 | `--headless` | - | Run browser without UI (useful for CI scripts) | `false` |
@@ -153,6 +154,9 @@ npm run dev -- https://my-app.com --device "iPhone 14"
 # Set a custom test title
 npm run dev -- https://my-app.com --title "User Registration Journey"
 
+# Generate test with visual regression comparison
+npm run dev -- https://my-app.com -o ./tests/visual.spec.ts --visual
+
 # Launch interactive test picker
 npm run dev -- test
 # or: npm run test:e2e
@@ -180,6 +184,7 @@ Options:
 | Option | Shorthand | Description | Default |
 |--------|-----------|-------------|---------|
 | `--all` | `-a` | Run all test suites immediately | `false` |
+| `--update-snapshots` | `-u` | Update visual baseline snapshots | `false` |
 | `--headless` | - | Run browser in headless mode | `false` (Headed) |
 
 ---

@@ -18,6 +18,11 @@ describe('buildPlaywrightArgs', () => {
     const args = buildPlaywrightArgs('tests\\nested\\sample.spec.ts');
     assert.deepEqual(args, ['playwright', 'test', 'tests/nested/sample.spec.ts', '--headed']);
   });
+
+  it('should include --update-snapshots when updateSnapshots option is true', () => {
+    const args = buildPlaywrightArgs('tests/sample.spec.ts', { updateSnapshots: true });
+    assert.deepEqual(args, ['playwright', 'test', 'tests/sample.spec.ts', '--headed', '--update-snapshots']);
+  });
 });
 
 describe('findTestFiles', () => {

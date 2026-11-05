@@ -28,6 +28,7 @@ interface CliOptions {
   run?: boolean;
   mobile?: boolean;
   device?: string;
+  visual?: boolean;
 }
 
 async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<void> {
@@ -188,6 +189,7 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     const sequence = normalizer.normalize(finalRawEvents, targetUrl, {
       deviceName,
       isMobile,
+      visual: options.visual,
     });
 
     if (options.debug) {
@@ -210,6 +212,7 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
       pom: options.pom,
       pageObjectPath: options.pagePath,
       deviceName,
+      visual: options.visual,
     });
 
     if (!synthesisResult.success) {
@@ -229,7 +232,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
       synthesisResult.pageObjectPath
         ? path.relative(process.cwd(), synthesisResult.pageObjectPath)
         : undefined,
-      deviceName
+      deviceName,
+      options.visual
     );
 
     // 8. Auto-Run or Interactive Prompt
@@ -250,6 +254,7 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     if (shouldRun) {
       const { success } = await executePlaywrightTest(relativeSpecPath, {
         headless: options.headless,
+        updateSnapshots: options.visual,
       });
 
       if (process.stdin.isTTY) {
@@ -349,6 +354,7 @@ program
   .option('-r, --run', 'Automatically run the generated test with Playwright after synthesis')
   .option('--mobile', 'Emulate a mobile smartphone viewport and touch screen (default: Pixel 7)')
   .option('--device <name>', 'Emulate a specific Playwright device profile (e.g. "Pixel 7", "iPhone 14")')
+  .option('--visual', 'Generate visual regression snapshot assertions (toHaveScreenshot)')
   .option('--headless', 'Run browser in headless mode')
   .option('--debug', 'Enable verbose debug logging')
   .action(async (url?: string, options?: CliOptions) => {
@@ -365,13 +371,15 @@ program
   .command('test [spec]')
   .description('Interactive test runner to select and execute Playwright tests')
   .option('-a, --all', 'Run all tests without prompting')
+  .option('-u, --update-snapshots', 'Update visual snapshot baselines')
   .option('--headless', 'Run browser in headless mode (default: headed)')
-  .action(async (spec?: string, options?: { all?: boolean; headless?: boolean }, cmd?: Command) => {
+  .action(async (spec?: string, options?: { all?: boolean; headless?: boolean; updateSnapshots?: boolean }, cmd?: Command) => {
     try {
       const isHeadless = Boolean(options?.headless || cmd?.parent?.opts()?.headless);
       await runInteractiveTestPicker(spec, {
         all: options?.all,
         headless: isHeadless,
+        updateSnapshots: options?.updateSnapshots,
       });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);

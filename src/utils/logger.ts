@@ -82,7 +82,8 @@ export function printCompletionCard(
   eventCount: number,
   modelName: string,
   pageObjectPath?: string,
-  deviceName?: string
+  deviceName?: string,
+  visual?: boolean
 ): void {
   const normOutput = outputPath.replace(/\\/g, '/');
   const normPO = pageObjectPath ? pageObjectPath.replace(/\\/g, '/') : undefined;
@@ -95,10 +96,14 @@ export function printCompletionCard(
   if (deviceName) {
     console.log(`    ${pc.dim('Device:')}      ${pc.magenta(`${deviceName} (Mobile Emulation)`)}`);
   }
+  if (visual) {
+    console.log(`    ${pc.dim('Visual:')}      ${pc.yellow('Snapshot regression assertions enabled')}`);
+  }
   console.log(
     `    ${pc.dim('Interactions:')} ${eventCount} actions synthesized (${pc.dim(modelName)})`
   );
   console.log('\n  ' + pc.dim('Next step:'));
-  console.log(`    ${pc.green(`npx playwright test ${normOutput} --headed`)}\n`);
+  const updateFlag = visual ? ' --update-snapshots' : '';
+  console.log(`    ${pc.green(`npx playwright test ${normOutput} --headed${updateFlag}`)}\n`);
 }
 
