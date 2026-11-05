@@ -120,6 +120,7 @@ clickspec [url] [options]
 | `--output <path>` | `-o` | Destination path for the generated spec | `./tests/flow.spec.ts` |
 | `--pom` | - | Generate structured Page Object Model (POM) classes and spec | `false` |
 | `--page-path <path>` | - | Destination path for Page Object class (used with `--pom`) | `./pages/<Page>.ts` |
+| `--run` | `-r` | Automatically execute generated test with Playwright | Prompts interactively |
 | `--model <name>` | `-m` | AI model override | `gemini-3.8-flash` |
 | `--title <title>` | - | Explicit test case title | Inferred from journey |
 | `--headless` | - | Run browser without UI (useful for CI scripts) | `false` |
@@ -137,6 +138,9 @@ npm run dev -- https://my-app.com/login --pom
 
 # Custom Page Object destination
 npm run dev -- https://my-app.com/login --pom -o ./tests/login.spec.ts --page-path ./pages/LoginPage.ts
+
+# Record and immediately execute test
+npm run dev -- https://my-app.com/login --run
 
 # Set a custom test title
 npm run dev -- https://my-app.com --title "User Registration Journey"

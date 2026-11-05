@@ -7,6 +7,7 @@ import { EventNormalizer } from './core/normalizer.js';
 import { synthesizePlaywrightTest } from './ai/synthesizer.js';
 import { getConfig, hasAIKeyConfigured } from './config.js';
 import { printBanner, printCompletionCard, logInfo, logSuccess, logWarn, logError } from './utils/logger.js';
+import { executePlaywrightTest, openPlaywrightReport } from './utils/runner.js';
 import type { RecordedEvent } from './types.js';
 
 function exitProcess(code = 0): void {
@@ -24,6 +25,7 @@ interface CliOptions {
   debug?: boolean;
   pom?: boolean;
   pagePath?: string;
+  run?: boolean;
 }
 
 async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<void> {
@@ -213,6 +215,44 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
         ? path.relative(process.cwd(), synthesisResult.pageObjectPath)
         : undefined
     );
+
+    // 8. Auto-Run or Interactive Prompt
+    const relativeSpecPath = path.relative(process.cwd(), synthesisResult.outputPath);
+    let shouldRun = options.run;
+
+    if (shouldRun === undefined && process.stdin.isTTY) {
+      const runConfirm = await p.confirm({
+        message: 'Do you want to run this test now with Playwright?',
+        initialValue: true,
+      });
+
+      if (!p.isCancel(runConfirm) && runConfirm) {
+        shouldRun = true;
+      }
+    }
+
+    if (shouldRun) {
+      const { success } = await executePlaywrightTest(relativeSpecPath, {
+        headless: options.headless,
+      });
+
+      if (process.stdin.isTTY) {
+        const viewReport = await p.confirm({
+          message: 'Open HTML test report in browser?',
+          initialValue: !success,
+        });
+
+        if (!p.isCancel(viewReport) && viewReport) {
+          await openPlaywrightReport();
+        }
+      }
+      p.outro(pc.green('Session finished.'));
+    } else {
+      p.outro(
+        pc.dim('Test ready. Run anytime with: ') +
+          pc.cyan(`npx playwright test ${relativeSpecPath.replace(/\\/g, '/')} --headed`)
+      );
+    }
   } catch (error: unknown) {
     s.stop(pc.red('Execution failed'));
     if (session) {
@@ -290,6 +330,7 @@ program
   .option('--title <title>', 'Descriptive title for the test')
   .option('--pom', 'Generate structured Page Object Model (POM) classes and spec')
   .option('--page-path <path>', 'Custom destination path for Page Object class (used with --pom)')
+  .option('-r, --run', 'Automatically run the generated test with Playwright after synthesis')
   .option('--headless', 'Run browser in headless mode')
   .option('--debug', 'Enable verbose debug logging')
   .action(async (url?: string, options?: CliOptions) => {
