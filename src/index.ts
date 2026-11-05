@@ -7,7 +7,7 @@ import { EventNormalizer } from './core/normalizer.js';
 import { synthesizePlaywrightTest } from './ai/synthesizer.js';
 import { getConfig, hasAIKeyConfigured } from './config.js';
 import { printBanner, printCompletionCard, logInfo, logSuccess, logWarn, logError } from './utils/logger.js';
-import { executePlaywrightTest, openPlaywrightReport } from './utils/runner.js';
+import { executePlaywrightTest, openPlaywrightReport, runInteractiveTestPicker } from './utils/runner.js';
 import type { RecordedEvent } from './types.js';
 
 function exitProcess(code = 0): void {
@@ -354,6 +354,25 @@ program
   .action(async (url?: string, options?: CliOptions) => {
     try {
       await runCli(url, options);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logError(message);
+      exitProcess(1);
+    }
+  });
+
+program
+  .command('test [spec]')
+  .description('Interactive test runner to select and execute Playwright tests')
+  .option('-a, --all', 'Run all tests without prompting')
+  .option('--headless', 'Run browser in headless mode (default: headed)')
+  .action(async (spec?: string, options?: { all?: boolean; headless?: boolean }, cmd?: Command) => {
+    try {
+      const isHeadless = Boolean(options?.headless || cmd?.parent?.opts()?.headless);
+      await runInteractiveTestPicker(spec, {
+        all: options?.all,
+        headless: isHeadless,
+      });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       logError(message);

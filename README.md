@@ -152,7 +152,35 @@ npm run dev -- https://my-app.com --device "iPhone 14"
 
 # Set a custom test title
 npm run dev -- https://my-app.com --title "User Registration Journey"
+
+# Launch interactive test picker
+npm run dev -- test
+# or: npm run test:e2e
+
+# Run all test suites
+npm run dev -- test --all
 ```
+
+---
+
+### Interactive Test Runner (`clickspec test`)
+
+Run your test suites without memorizing individual spec filenames:
+
+```bash
+npm run dev -- test
+# or: npm run test:e2e
+```
+
+- Displays an interactive menu in your terminal listing all generated specs.
+- Choose an individual test or select `⚡ Run all test suites`.
+- Offers to automatically launch the HTML visual report after completion.
+
+Options:
+| Option | Shorthand | Description | Default |
+|--------|-----------|-------------|---------|
+| `--all` | `-a` | Run all test suites immediately | `false` |
+| `--headless` | - | Run browser in headless mode | `false` (Headed) |
 
 ---
 
