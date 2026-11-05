@@ -30,7 +30,7 @@ describe('findTestFiles', () => {
     const testsDir = path.resolve(process.cwd(), 'tests');
     const files = await findTestFiles(testsDir);
     assert.ok(files.length >= 1);
-    assert.ok(files.some((f) => f.includes('porto')));
+    assert.ok(files.some((f) => f.endsWith('.spec.ts')));
   });
 
   it('should return empty array for non-existent directory', async () => {
