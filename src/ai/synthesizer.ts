@@ -55,7 +55,8 @@ export async function synthesizePlaywrightTest(
         relativeImport,
         options.testTitle,
         options.deviceName,
-        options.visual
+        options.visual,
+        options.auth
       );
 
       if (options.debug) {
@@ -69,7 +70,8 @@ export async function synthesizePlaywrightTest(
         relativeImport,
         options.testTitle || `Journey for ${options.url}`,
         options.deviceName,
-        options.visual
+        options.visual,
+        options.auth
       );
 
       if (formatted.warnings.length > 0 && options.debug) {
@@ -95,6 +97,8 @@ export async function synthesizePlaywrightTest(
         pageObjectCode: formatted.pageObjectCode,
         deviceName: options.deviceName,
         visual: options.visual,
+        auth: options.auth,
+        saveAuth: options.saveAuth,
         modelUsed: `${aiClient.provider}:${aiClient.model}`,
         stats: {
           rawEventsCount,
@@ -111,7 +115,8 @@ export async function synthesizePlaywrightTest(
       sequence,
       options.testTitle,
       options.deviceName,
-      options.visual
+      options.visual,
+      options.auth
     );
 
     if (options.debug) {
@@ -124,7 +129,8 @@ export async function synthesizePlaywrightTest(
       rawResponse,
       options.testTitle || `Journey for ${options.url}`,
       options.deviceName,
-      options.visual
+      options.visual,
+      options.auth
     );
 
     if (formatted.warnings.length > 0 && options.debug) {
@@ -146,6 +152,8 @@ export async function synthesizePlaywrightTest(
       isPom: false,
       deviceName: options.deviceName,
       visual: options.visual,
+      auth: options.auth,
+      saveAuth: options.saveAuth,
       modelUsed: `${aiClient.provider}:${aiClient.model}`,
       stats: {
         rawEventsCount,

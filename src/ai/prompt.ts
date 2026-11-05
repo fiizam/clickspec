@@ -42,7 +42,8 @@ export function buildSynthesisUserPrompt(
   sequence: InteractionSequence,
   testTitle?: string,
   deviceName?: string,
-  visual?: boolean
+  visual?: boolean,
+  auth?: string
 ): string {
   const title = testTitle || `E2E Journey on ${sequence.initialUrl}`;
   const eventsJson = JSON.stringify(sequence.events, null, 2);
@@ -52,12 +53,15 @@ export function buildSynthesisUserPrompt(
   const visualRequirement = visual
     ? '\n- Visual Regression: Add visual regression assertions `await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });` after initial page navigation and after any major UI state changes.'
     : '';
+  const authRequirement = auth
+    ? `\n- Replay Authentication: The Spec file must reuse the authenticated session state with: test.use({ storageState: '${auth.replace(/\\/g, '/')}' });`
+    : '';
 
   return `Synthesize a robust Playwright E2E test script in TypeScript based on the recorded session below.
 
 Test Title: "${title}"
 Initial Target URL: ${sequence.initialUrl}
-Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)${deviceName ? `\nEmulated Mobile Device: ${deviceName}` : ''}${visual ? '\nVisual Regression: Enabled' : ''}
+Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)${deviceName ? `\nEmulated Mobile Device: ${deviceName}` : ''}${visual ? '\nVisual Regression: Enabled' : ''}${auth ? `\nAuthenticated Storage State: ${auth}` : ''}
 
 --- RECORDED INTERACTION SEQUENCE (JSON) ---
 ${eventsJson}
@@ -66,7 +70,7 @@ ${eventsJson}
 Requirements:
 - Start the test at the initial URL: \`await page.goto('${sequence.initialUrl}');\`
 - Map every user action to resilient Playwright locators (getByRole, getByLabel, getByPlaceholder, getByText).
-- Add smart assertions for URL transitions, submitted data, and high-signal alert/toast/heading DOM changes.${deviceRequirement}${visualRequirement}
+- Add smart assertions for URL transitions, submitted data, and high-signal alert/toast/heading DOM changes.${deviceRequirement}${visualRequirement}${authRequirement}
 - Return ONLY the executable TypeScript test code.`;
 }
 
@@ -124,7 +128,8 @@ export function buildPOMSynthesisUserPrompt(
   relativeImportPath: string,
   testTitle?: string,
   deviceName?: string,
-  visual?: boolean
+  visual?: boolean,
+  auth?: string
 ): string {
   const title = testTitle || `E2E POM Journey on ${sequence.initialUrl}`;
   const eventsJson = JSON.stringify(sequence.events, null, 2);
@@ -134,6 +139,9 @@ export function buildPOMSynthesisUserPrompt(
   const visualRequirement = visual
     ? '\n- Visual Regression: The Spec file must assert visual appearance using `await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });` after initial page load and after major transitions.'
     : '';
+  const authRequirement = auth
+    ? `\n- Replay Authentication: The Spec file must reuse the authenticated session state with: test.use({ storageState: '${auth.replace(/\\/g, '/')}' });`
+    : '';
 
   return `Synthesize a Playwright Page Object Model architecture based on the recorded session below.
 
@@ -141,7 +149,7 @@ Test Title: "${title}"
 Initial Target URL: ${sequence.initialUrl}
 Page Class Name: ${pageClassName}
 Relative Import Path for Spec: "${relativeImportPath}"
-Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)${deviceName ? `\nEmulated Mobile Device: ${deviceName}` : ''}${visual ? '\nVisual Regression: Enabled' : ''}
+Total Captured Events: ${sequence.metadata.totalRawEvents} (Normalized into ${sequence.metadata.normalizedCount} atomic actions)${deviceName ? `\nEmulated Mobile Device: ${deviceName}` : ''}${visual ? '\nVisual Regression: Enabled' : ''}${auth ? `\nAuthenticated Storage State: ${auth}` : ''}
 
 --- RECORDED INTERACTION SEQUENCE (JSON) ---
 ${eventsJson}
@@ -150,7 +158,7 @@ ${eventsJson}
 Requirements:
 - Structure the Page Object with reusable locator properties and high-level action methods.
 - The Spec file must import the Page Object using: import { ${pageClassName} } from '${relativeImportPath}';
-- Include smart assertions for URL transitions and DOM alert/toast mutations.${deviceRequirement}${visualRequirement}
+- Include smart assertions for URL transitions and DOM alert/toast mutations.${deviceRequirement}${visualRequirement}${authRequirement}
 - Output strictly using <<<PAGE_OBJECT>>>...<<<END_PAGE_OBJECT>>> and <<<SPEC>>>...<<<END_SPEC>>> tags.`;
 }
 

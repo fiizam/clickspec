@@ -12,7 +12,8 @@ export function formatGeneratedTest(
   rawCode: string,
   testTitle = 'generated e2e flow',
   deviceName?: string,
-  visual?: boolean
+  visual?: boolean,
+  storageState?: string
 ): FormatResult {
   const warnings: string[] = [];
 
@@ -66,6 +67,27 @@ export function formatGeneratedTest(
     }
   }
 
+  // Handle storageState authentication reuse
+  const normStorageState = storageState ? storageState.replace(/\\/g, '/') : undefined;
+  if (normStorageState) {
+    if (code.includes('test.use(')) {
+      if (!code.includes('storageState')) {
+        code = code.replace(
+          /test\.use\(\{\s*([\s\S]*?)\}\);/,
+          (_match, inner) => `test.use({\n${inner.trimEnd()},\n  storageState: '${normStorageState}',\n});`
+        );
+      }
+    } else {
+      const testIdx = code.search(/\btest(?:\.describe)?\s*\(/);
+      const useBlock = `test.use({\n  storageState: '${normStorageState}',\n});\n\n`;
+      if (testIdx !== -1) {
+        code = code.slice(0, testIdx) + useBlock + code.slice(testIdx);
+      } else {
+        code = `${useBlock}${code}`;
+      }
+    }
+  }
+
   // Handle visual regression testing assertion
   if (visual && !code.includes('toHaveScreenshot')) {
     const gotoMatch = code.match(/(?:await\s+page\.goto\([^)]+\);?|await\s+\w+\.goto\([^)]*\);?)/);
@@ -84,9 +106,14 @@ export function formatGeneratedTest(
   // Ensure test() or test.describe() exists
   if (!code.includes('test(') && !code.includes('test.describe(')) {
     warnings.push('Code was not wrapped in test block; wrapping inside test(...) block.');
-    const useSnippet = deviceName
-      ? `test.use({\n  ...devices['${deviceName}'],\n  defaultBrowserType: 'chromium',\n});\n\n`
-      : '';
+    const useProps: string[] = [];
+    if (deviceName) {
+      useProps.push(`  ...devices['${deviceName}'],\n  defaultBrowserType: 'chromium',`);
+    }
+    if (normStorageState) {
+      useProps.push(`  storageState: '${normStorageState}',`);
+    }
+    const useSnippet = useProps.length > 0 ? `test.use({\n${useProps.join('\n')}\n});\n\n` : '';
     const visualSnippet = visual ? `\n  await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.05 });` : '';
     code = `import { test, expect${deviceName ? ', devices' : ''} } from '@playwright/test';\n\n${useSnippet}test('${testTitle.replace(/'/g, "\\'")}', async ({ page }) => {\n${indentCode(code, 2)}${visualSnippet}\n});\n`;
   }
@@ -148,7 +175,8 @@ export function formatPOMResult(
   relativeImportPath = '../pages/FlowPage.js',
   testTitle = 'generated e2e flow',
   deviceName?: string,
-  visual?: boolean
+  visual?: boolean,
+  storageState?: string
 ): POMFormatResult {
   const warnings: string[] = [];
 
@@ -204,7 +232,7 @@ export function formatPOMResult(
     specCode = `import { ${pageClassName} } from '${relativeImportPath}';\n${specCode}`;
   }
 
-  const formattedSpec = formatGeneratedTest(specCode, testTitle, deviceName, visual);
+  const formattedSpec = formatGeneratedTest(specCode, testTitle, deviceName, visual, storageState);
   warnings.push(...formattedSpec.warnings);
 
   return {

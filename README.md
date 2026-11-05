@@ -125,6 +125,8 @@ clickspec [url] [options]
 | `--mobile` | - | Emulate a mobile smartphone viewport and touch screen | `false` (Desktop) |
 | `--device <name>` | - | Emulate a specific Playwright device (e.g. "Pixel 7", "iPhone 14") | `Pixel 7` when mobile |
 | `--visual` | - | Include visual regression screenshot assertions (`toHaveScreenshot`) | `false` |
+| `--save-auth <path>` | - | Save authenticated browser session (cookies & storage) to JSON file | - |
+| `--auth <path>` | - | Reuse saved authentication state from JSON file | - |
 | `--model <name>` | `-m` | AI model override | `gemini-3.8-flash` |
 | `--title <title>` | - | Explicit test case title | Inferred from journey |
 | `--headless` | - | Run browser without UI (useful for CI scripts) | `false` |
@@ -158,13 +160,40 @@ npm run dev -- https://my-app.com --title "User Registration Journey"
 # Generate test with visual regression comparison
 npm run dev -- https://my-app.com -o ./tests/visual.spec.ts --visual
 
+# Record login flow and save authentication cookies/storage
+npm run dev -- https://my-app.com/login --save-auth ./auth/user.json
+
+# Record authenticated features bypassing login
+npm run dev -- https://my-app.com/settings --auth ./auth/user.json -o ./tests/settings.spec.ts
+
 # Launch interactive test picker
 npm run dev -- test
 # or: npm run test:e2e
 
 # Run all test suites
 npm run dev -- test --all
+
+# View Playwright HTML test reports
+npm run report
 ```
+
+---
+
+### Authentication & Session Reuse (`--save-auth` & `--auth`)
+
+Avoid re-typing passwords and undergoing MFA on every recorded test:
+
+1. **Step 1: Record your sign-in once and save the session:**
+   ```bash
+   npm run dev -- https://app.example.com/login --save-auth ./auth/admin.json
+   ```
+   Log into your app normally. When the browser closes, cookies and localStorage are securely preserved into `auth/admin.json`.
+
+2. **Step 2: Record subsequent dashboard & internal flows already logged in:**
+   ```bash
+   npm run dev -- https://app.example.com/dashboard --auth ./auth/admin.json -o ./tests/dashboard.spec.ts
+   ```
+   The browser opens already authenticated, and `clickspec` automatically injects `test.use({ storageState: 'auth/admin.json' })` into the generated test spec!
 
 ---
 
@@ -187,6 +216,17 @@ Options:
 | `--all` | `-a` | Run all test suites immediately | `false` |
 | `--update-snapshots` | `-u` | Update visual baseline snapshots | `false` |
 | `--headless` | - | Run browser in headless mode | `false` (Headed) |
+
+---
+
+### HTML Test Report Viewer (`clickspec report`)
+
+Serve and inspect detailed test execution reports, execution timelines, traces, and visual diffs:
+
+```bash
+npm run report
+# or: npx clickspec report
+```
 
 ---
 

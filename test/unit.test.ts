@@ -225,6 +225,31 @@ test('Visual Test', async ({ page }) => {
     assert.equal(result.isValid, true);
     assert.match(result.code, /toHaveScreenshot\(\{\s*maxDiffPixelRatio:\s*0\.05\s*\}\)/);
   });
+
+  it('should inject storageState in test.use when storageState is provided', () => {
+    const rawCode = `import { test, expect } from '@playwright/test';
+
+test('Authenticated Test', async ({ page }) => {
+  await page.goto('https://example.com/dashboard');
+});`;
+    const result = formatGeneratedTest(rawCode, 'Authenticated Test', undefined, false, 'auth/user.json');
+
+    assert.equal(result.isValid, true);
+    assert.match(result.code, /test\.use\(\{\s*storageState:\s*'auth\/user\.json',?\s*\}\);/);
+  });
+
+  it('should merge storageState and deviceName into single test.use block', () => {
+    const rawCode = `import { test, expect } from '@playwright/test';
+
+test('Mobile Auth Test', async ({ page }) => {
+  await page.goto('https://example.com/dashboard');
+});`;
+    const result = formatGeneratedTest(rawCode, 'Mobile Auth Test', 'Pixel 7', false, 'auth/mobile-user.json');
+
+    assert.equal(result.isValid, true);
+    assert.match(result.code, /test\.use\(\{[\s\S]*\.\.\.devices\['Pixel 7'\]/);
+    assert.match(result.code, /test\.use\(\{[\s\S]*storageState:\s*'auth\/mobile-user\.json'/);
+  });
 });
 
 describe('buildSynthesisUserPrompt', () => {
@@ -373,6 +398,35 @@ test('Mobile POM Journey', async ({ page }) => {
     assert.equal(result.isValid, true);
     assert.match(result.specCode, /import\s*\{[^}]*devices[^}]*\}\s*from\s*['"]@playwright\/test['"]/);
     assert.match(result.specCode, /test\.use\(\{\s*\.\.\.devices\['Pixel 7'\],[\s\S]*defaultBrowserType:\s*'chromium'/);
+  });
+
+  it('should inject storageState into POM spec when auth is provided', () => {
+    const rawPOM = `
+<<<PAGE_OBJECT>>>
+export class AuthDashboardPage {
+  readonly page: Page;
+}
+<<<END_PAGE_OBJECT>>>
+<<<SPEC>>>
+import { test, expect } from '@playwright/test';
+import { AuthDashboardPage } from '../pages/AuthDashboardPage.js';
+
+test('Dashboard Journey', async ({ page }) => {
+  await page.goto('https://example.com/dashboard');
+});
+<<<END_SPEC>>>
+`;
+    const result = formatPOMResult(
+      rawPOM,
+      'AuthDashboardPage',
+      '../pages/AuthDashboardPage.js',
+      'Dashboard Journey',
+      undefined,
+      false,
+      'auth/admin.json'
+    );
+    assert.equal(result.isValid, true);
+    assert.match(result.specCode, /test\.use\(\{\s*storageState:\s*'auth\/admin\.json',?\s*\}\);/);
   });
 });
 

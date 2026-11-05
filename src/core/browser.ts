@@ -1,3 +1,5 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { chromium, devices, type Browser, type BrowserContext, type Page } from 'playwright';
 import { InteractionRecorder } from './recorder.js';
 import type { BrowserSessionOptions, RecordedEvent } from '../types.js';
@@ -9,6 +11,7 @@ export class BrowserSession {
   private recorder: InteractionRecorder | null = null;
   private options: BrowserSessionOptions;
   private isFinished = false;
+  private isAuthSaved = false;
   private completionResolver: ((events: RecordedEvent[]) => void) | null = null;
 
   private constructor(options: BrowserSessionOptions) {
@@ -55,13 +58,21 @@ export class BrowserSession {
       throw launchError;
     }
 
-    const contextOptions = devicePreset
+    const contextOptions: Parameters<Browser['newContext']>[0] = devicePreset
       ? { ...devicePreset }
       : {
           viewport: this.options.viewport ?? { width: 1280, height: 800 },
           userAgent:
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 clickspec/1.0',
         };
+
+    if (this.options.auth) {
+      const resolvedAuth = path.resolve(this.options.auth);
+      if (!fs.existsSync(resolvedAuth)) {
+        throw new Error(`Authentication state file not found at: ${resolvedAuth}`);
+      }
+      contextOptions.storageState = resolvedAuth;
+    }
 
     this.context = await this.browser.newContext(contextOptions);
 
@@ -74,13 +85,30 @@ export class BrowserSession {
     await this.recorder.setup();
 
     // Listen for browser / window close by user
-    this.page.on('close', () => {
+    this.page.on('close', async () => {
+      await this.persistAuthState();
       this.handleBrowserClosed();
     });
 
-    this.browser.on('disconnected', () => {
+    this.browser.on('disconnected', async () => {
+      await this.persistAuthState();
       this.handleBrowserClosed();
     });
+  }
+
+  private async persistAuthState(): Promise<void> {
+    if (!this.options.saveAuth || this.isAuthSaved || !this.context) {
+      return;
+    }
+    try {
+      const resolvedPath = path.resolve(this.options.saveAuth);
+      const parentDir = path.dirname(resolvedPath);
+      await fs.promises.mkdir(parentDir, { recursive: true });
+      await this.context.storageState({ path: resolvedPath });
+      this.isAuthSaved = true;
+    } catch {
+      // Ignore if context or page is already closed or shutting down
+    }
   }
 
   public async navigate(url: string): Promise<void> {
@@ -110,6 +138,8 @@ export class BrowserSession {
     if (this.isFinished) {
       return this.recorder?.getRecordedEvents() || [];
     }
+
+    await this.persistAuthState();
 
     const events = this.recorder?.getRecordedEvents() || [];
     this.isFinished = true;
@@ -155,6 +185,10 @@ export class BrowserSession {
 
   public isClosed(): boolean {
     return this.isFinished;
+  }
+
+  public hasSavedAuth(): boolean {
+    return this.isAuthSaved;
   }
 }
 

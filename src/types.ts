@@ -121,6 +121,8 @@ export interface TestSynthesisOptions {
   pageObjectPath?: string;
   deviceName?: string;
   visual?: boolean;
+  auth?: string;
+  saveAuth?: string;
 }
 
 export interface TestSynthesisResult {
@@ -138,6 +140,8 @@ export interface TestSynthesisResult {
   pageObjectCode?: string;
   deviceName?: string;
   visual?: boolean;
+  auth?: string;
+  saveAuth?: string;
   error?: string;
 }
 
@@ -149,5 +153,7 @@ export interface BrowserSessionOptions {
   onStatusChange?: (status: string) => void;
   mobile?: boolean;
   deviceName?: string;
+  saveAuth?: string;
+  auth?: string;
 }
 

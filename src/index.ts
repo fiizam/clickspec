@@ -1,7 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { Command } from 'commander';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
-import path from 'node:path';
 import { BrowserSession } from './core/browser.js';
 import { EventNormalizer } from './core/normalizer.js';
 import { synthesizePlaywrightTest } from './ai/synthesizer.js';
@@ -29,6 +30,8 @@ interface CliOptions {
   mobile?: boolean;
   device?: string;
   visual?: boolean;
+  saveAuth?: string;
+  auth?: string;
 }
 
 async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<void> {
@@ -121,6 +124,19 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
   }
 
   // 4. Launch Browser Recording Session
+  if (options.auth) {
+    const resolvedAuth = path.resolve(options.auth);
+    if (!fs.existsSync(resolvedAuth)) {
+      logError(`Authentication state file not found at: ${resolvedAuth}`);
+      p.note(
+        `Record a login session first to generate it:\n  clickspec <login-url> --save-auth ${options.auth}`,
+        'Auth File Missing'
+      );
+      exitProcess(1);
+      return;
+    }
+  }
+
   const isMobile = Boolean(options.mobile || options.device);
   const deviceName = options.device || (isMobile ? 'Pixel 7' : undefined);
 
@@ -142,6 +158,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
       viewport: isMobile ? undefined : config.defaultViewport,
       mobile: isMobile,
       deviceName,
+      saveAuth: options.saveAuth,
+      auth: options.auth,
       onEvent: (evt) => {
         recordedEvents.push(evt);
         if (options.debug) {
@@ -153,7 +171,7 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     await session.navigate(targetUrl);
     s.stop(
       pc.green(
-        `Browser session active on ${targetUrl}${isMobile ? ` [${deviceName} mobile profile]` : ''}`
+        `Browser session active on ${targetUrl}${isMobile ? ` [${deviceName} mobile profile]` : ''}${options.auth ? ' [authenticated session]' : ''}`
       )
     );
     logInfo(
@@ -170,6 +188,10 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     // Ensure session is closed and get all final events
     const finalRawEvents = await session.stop();
     logSuccess(`Recording completed! Captured ${finalRawEvents.length} raw browser events.`);
+
+    if (session.hasSavedAuth() && options.saveAuth) {
+      logSuccess(`Authentication state saved to: ${options.saveAuth}`);
+    }
 
     if (finalRawEvents.length === 0) {
       logWarn('No user interactions were recorded during the session.');
@@ -213,6 +235,8 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
       pageObjectPath: options.pagePath,
       deviceName,
       visual: options.visual,
+      auth: options.auth,
+      saveAuth: options.saveAuth,
     });
 
     if (!synthesisResult.success) {
@@ -233,7 +257,9 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
         ? path.relative(process.cwd(), synthesisResult.pageObjectPath)
         : undefined,
       deviceName,
-      options.visual
+      options.visual,
+      options.auth,
+      session?.hasSavedAuth() ? options.saveAuth : undefined
     );
 
     // 8. Auto-Run or Interactive Prompt
@@ -355,6 +381,8 @@ program
   .option('--mobile', 'Emulate a mobile smartphone viewport and touch screen (default: Pixel 7)')
   .option('--device <name>', 'Emulate a specific Playwright device profile (e.g. "Pixel 7", "iPhone 14")')
   .option('--visual', 'Generate visual regression snapshot assertions (toHaveScreenshot)')
+  .option('--save-auth <path>', 'Save authenticated browser state (cookies & storage) to JSON file')
+  .option('--auth <path>', 'Reuse saved authentication state from JSON file')
   .option('--headless', 'Run browser in headless mode')
   .option('--debug', 'Enable verbose debug logging')
   .action(async (url?: string, options?: CliOptions) => {
@@ -381,6 +409,19 @@ program
         headless: isHeadless,
         updateSnapshots: options?.updateSnapshots,
       });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      logError(message);
+      exitProcess(1);
+    }
+  });
+
+program
+  .command('report')
+  .description('Open and serve the Playwright HTML test report in your browser')
+  .action(async () => {
+    try {
+      await openPlaywrightReport();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       logError(message);

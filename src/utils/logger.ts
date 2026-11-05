@@ -83,7 +83,9 @@ export function printCompletionCard(
   modelName: string,
   pageObjectPath?: string,
   deviceName?: string,
-  visual?: boolean
+  visual?: boolean,
+  auth?: string,
+  savedAuth?: string
 ): void {
   const normOutput = outputPath.replace(/\\/g, '/');
   const normPO = pageObjectPath ? pageObjectPath.replace(/\\/g, '/') : undefined;
@@ -98,6 +100,12 @@ export function printCompletionCard(
   }
   if (visual) {
     console.log(`    ${pc.dim('Visual:')}      ${pc.yellow('Snapshot regression assertions enabled')}`);
+  }
+  if (auth) {
+    console.log(`    ${pc.dim('Auth Reused:')} ${pc.green(auth.replace(/\\/g, '/'))}`);
+  }
+  if (savedAuth) {
+    console.log(`    ${pc.dim('Auth Saved:')}  ${pc.green(savedAuth.replace(/\\/g, '/'))}`);
   }
   console.log(
     `    ${pc.dim('Interactions:')} ${eventCount} actions synthesized (${pc.dim(modelName)})`
