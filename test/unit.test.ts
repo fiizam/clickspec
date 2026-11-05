@@ -210,7 +210,7 @@ test('Mobile Test', async ({ page }) => {
 
     assert.equal(result.isValid, true);
     assert.match(result.code, /import\s*\{[^}]*devices[^}]*\}\s*from\s*['"]@playwright\/test['"]/);
-    assert.match(result.code, /test\.use\(\{\s*\.\.\.devices\['Pixel 7'\],?\s*\}\);/);
+    assert.match(result.code, /test\.use\(\{\s*\.\.\.devices\['Pixel 7'\],[\s\S]*defaultBrowserType:\s*'chromium'/);
   });
 });
 
@@ -359,7 +359,7 @@ test('Mobile POM Journey', async ({ page }) => {
     const result = formatPOMResult(rawPOM, 'MobilePage', '../pages/MobilePage.js', 'Mobile POM Journey', 'Pixel 7');
     assert.equal(result.isValid, true);
     assert.match(result.specCode, /import\s*\{[^}]*devices[^}]*\}\s*from\s*['"]@playwright\/test['"]/);
-    assert.match(result.specCode, /test\.use\(\{\s*\.\.\.devices\['Pixel 7'\],?\s*\}\);/);
+    assert.match(result.specCode, /test\.use\(\{\s*\.\.\.devices\['Pixel 7'\],[\s\S]*defaultBrowserType:\s*'chromium'/);
   });
 });
 

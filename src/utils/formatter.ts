@@ -50,19 +50,27 @@ export function formatGeneratedTest(
 
     if (!code.includes('test.use(')) {
       const testIdx = code.search(/\btest(?:\.describe)?\s*\(/);
-      const useBlock = `test.use({\n  ...devices['${deviceName}'],\n});\n\n`;
+      const useBlock = `test.use({\n  ...devices['${deviceName}'],\n  defaultBrowserType: 'chromium',\n});\n\n`;
       if (testIdx !== -1) {
         code = code.slice(0, testIdx) + useBlock + code.slice(testIdx);
       } else {
         code = `${useBlock}${code}`;
       }
+    } else if (!code.includes('defaultBrowserType')) {
+      // Ensure mobile devices like iPhone don't crash expecting uninstalled webkit engine
+      code = code.replace(
+        /test\.use\(\{\s*([\s\S]*?)\}\);/,
+        (_match, inner) => `test.use({\n${inner.trimEnd()},\n  defaultBrowserType: 'chromium',\n});`
+      );
     }
   }
 
   // Ensure test() or test.describe() exists
   if (!code.includes('test(') && !code.includes('test.describe(')) {
     warnings.push('Code was not wrapped in test block; wrapping inside test(...) block.');
-    const useSnippet = deviceName ? `test.use({\n  ...devices['${deviceName}'],\n});\n\n` : '';
+    const useSnippet = deviceName
+      ? `test.use({\n  ...devices['${deviceName}'],\n  defaultBrowserType: 'chromium',\n});\n\n`
+      : '';
     code = `import { test, expect${deviceName ? ', devices' : ''} } from '@playwright/test';\n\n${useSnippet}test('${testTitle.replace(/'/g, "\\'")}', async ({ page }) => {\n${indentCode(code, 2)}\n});\n`;
   }
 

@@ -46,7 +46,7 @@ export function buildSynthesisUserPrompt(
   const title = testTitle || `E2E Journey on ${sequence.initialUrl}`;
   const eventsJson = JSON.stringify(sequence.events, null, 2);
   const deviceRequirement = deviceName
-    ? `\n- Mobile Emulation: Emulate the '${deviceName}' mobile device profile. Include: import { test, expect, devices } from '@playwright/test'; and test.use({ ...devices['${deviceName}'] });`
+    ? `\n- Mobile Emulation: Emulate the '${deviceName}' mobile device profile. Include: import { test, expect, devices } from '@playwright/test'; and test.use({ ...devices['${deviceName}'], defaultBrowserType: 'chromium' });`
     : '';
 
   return `Synthesize a robust Playwright E2E test script in TypeScript based on the recorded session below.
@@ -124,7 +124,7 @@ export function buildPOMSynthesisUserPrompt(
   const title = testTitle || `E2E POM Journey on ${sequence.initialUrl}`;
   const eventsJson = JSON.stringify(sequence.events, null, 2);
   const deviceRequirement = deviceName
-    ? `\n- Mobile Emulation: The Spec file must emulate the '${deviceName}' mobile device profile. Include: import { test, expect, devices } from '@playwright/test'; and test.use({ ...devices['${deviceName}'] });`
+    ? `\n- Mobile Emulation: The Spec file must emulate the '${deviceName}' mobile device profile. Include: import { test, expect, devices } from '@playwright/test'; and test.use({ ...devices['${deviceName}'], defaultBrowserType: 'chromium' });`
     : '';
 
   return `Synthesize a Playwright Page Object Model architecture based on the recorded session below.
