@@ -197,6 +197,16 @@ Avoid re-typing passwords and undergoing MFA on every recorded test:
 
 ---
 
+### Resilient Connection & Error Recovery
+
+Never lose context due to offline local servers or mistyped URLs. If `clickspec` detects an unreachable target (such as a local dev server that has not started yet):
+
+- Diagnoses the issue (`ERR_CONNECTION_REFUSED`, `ERR_NAME_NOT_RESOLVED`, timeout, or SSL certificate issues).
+- Displays clear, actionable remediation guidance instead of raw Playwright stack traces.
+- Surfaces an interactive terminal recovery menu to **Retry connecting** (after starting your server), **Enter a different URL**, or **Cancel** cleanly.
+
+---
+
 ### Interactive Test Runner (`clickspec test`)
 
 Run your test suites without memorizing individual spec filenames:
