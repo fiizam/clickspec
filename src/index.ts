@@ -9,6 +9,7 @@ import { synthesizePlaywrightTest } from './ai/synthesizer.js';
 import { getConfig, hasAIKeyConfigured } from './config.js';
 import { printBanner, printCompletionCard, logInfo, logSuccess, logWarn, logError } from './utils/logger.js';
 import { executePlaywrightTest, openPlaywrightReport, runInteractiveTestPicker } from './utils/runner.js';
+import { NavigationError, normalizeTargetUrl } from './utils/url.js';
 import type { RecordedEvent } from './types.js';
 
 function exitProcess(code = 0): void {
@@ -80,6 +81,11 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
         if (!value || value.trim().length === 0) {
           return 'Target URL is required.';
         }
+        try {
+          normalizeTargetUrl(value);
+        } catch (e: unknown) {
+          return e instanceof Error ? e.message : String(e);
+        }
       },
     });
 
@@ -92,8 +98,13 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
     targetUrl = urlInput.trim();
   }
 
-  if (!/^https?:\/\//i.test(targetUrl)) {
-    targetUrl = `http://${targetUrl}`;
+  try {
+    targetUrl = normalizeTargetUrl(targetUrl);
+  } catch (urlErr: unknown) {
+    const msg = urlErr instanceof Error ? urlErr.message : String(urlErr);
+    logError(msg);
+    exitProcess(1);
+    return;
   }
 
   // 3. Resolve Output File Path
@@ -168,12 +179,93 @@ async function runCli(targetUrlArg?: string, options: CliOptions = {}): Promise<
       },
     });
 
-    await session.navigate(targetUrl);
-    s.stop(
-      pc.green(
-        `Browser session active on ${targetUrl}${isMobile ? ` [${deviceName} mobile profile]` : ''}${options.auth ? ' [authenticated session]' : ''}`
-      )
-    );
+    let navSuccess = false;
+    while (!navSuccess) {
+      try {
+        const { warning } = await session.navigate(targetUrl);
+        s.stop(
+          pc.green(
+            `Browser session active on ${targetUrl}${isMobile ? ` [${deviceName} mobile profile]` : ''}${options.auth ? ' [authenticated session]' : ''}`
+          )
+        );
+
+        if (warning) {
+          logWarn(warning);
+        }
+
+        navSuccess = true;
+      } catch (navErr: unknown) {
+        s.stop(pc.red('Navigation failed'));
+
+        if (navErr instanceof NavigationError) {
+          p.log.error(pc.red(pc.bold(navErr.friendlyMessage)));
+          p.note(navErr.suggestion, 'Connection Failed');
+
+          if (process.stdin.isTTY) {
+            const recoveryAction = await p.select({
+              message: 'How would you like to proceed?',
+              options: [
+                {
+                  value: 'retry',
+                  label: `🔄 Retry connecting to ${targetUrl}`,
+                },
+                {
+                  value: 'change',
+                  label: '✏️ Enter a different URL',
+                },
+                {
+                  value: 'cancel',
+                  label: '❌ Cancel and exit',
+                },
+              ],
+            });
+
+            if (p.isCancel(recoveryAction) || recoveryAction === 'cancel') {
+              p.cancel('Recording cancelled.');
+              await session.stop();
+              exitProcess(0);
+              return;
+            }
+
+            if (recoveryAction === 'change') {
+              const newUrlInput = await p.text({
+                message: 'Enter new target URL:',
+                placeholder: 'http://localhost:3000',
+                validate(val) {
+                  if (!val || val.trim().length === 0) return 'URL cannot be empty.';
+                  try {
+                    normalizeTargetUrl(val);
+                  } catch (e: unknown) {
+                    return e instanceof Error ? e.message : String(e);
+                  }
+                },
+              });
+
+              if (p.isCancel(newUrlInput)) {
+                p.cancel('Recording cancelled.');
+                await session.stop();
+                exitProcess(0);
+                return;
+              }
+
+              targetUrl = normalizeTargetUrl(newUrlInput.trim());
+            }
+
+            s.start(pc.cyan(`Connecting to ${targetUrl}...`));
+            continue;
+          }
+        }
+
+        // Non-interactive fallback
+        if (session) {
+          await session.stop();
+        }
+        const message = navErr instanceof Error ? navErr.message : String(navErr);
+        logError(message, navErr);
+        exitProcess(1);
+        return;
+      }
+    }
     logInfo(
       pc.bold(
         pc.yellow(

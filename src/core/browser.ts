@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { chromium, devices, type Browser, type BrowserContext, type Page } from 'playwright';
 import { InteractionRecorder } from './recorder.js';
+import { NavigationError, normalizeTargetUrl } from '../utils/url.js';
 import type { BrowserSessionOptions, RecordedEvent } from '../types.js';
 
 export class BrowserSession {
@@ -111,17 +112,34 @@ export class BrowserSession {
     }
   }
 
-  public async navigate(url: string): Promise<void> {
+  public async navigate(url: string): Promise<{ status?: number; warning?: string }> {
     if (!this.page || this.page.isClosed()) {
       throw new Error('Browser page is closed or not initialized.');
     }
 
-    let validUrl = url;
-    if (!/^https?:\/\//i.test(validUrl)) {
-      validUrl = `http://${validUrl}`;
-    }
+    const validUrl = normalizeTargetUrl(url);
 
-    await this.page.goto(validUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    try {
+      const response = await this.page.goto(validUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 30000,
+      });
+
+      if (response) {
+        const status = response.status();
+        if (status >= 400) {
+          const warning = `Server returned HTTP ${status} for ${validUrl}`;
+          return { status, warning };
+        }
+        return { status };
+      }
+      return {};
+    } catch (err: unknown) {
+      if (err instanceof NavigationError) {
+        throw err;
+      }
+      throw new NavigationError(validUrl, err);
+    }
   }
 
   public async waitForCompletion(): Promise<RecordedEvent[]> {

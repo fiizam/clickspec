@@ -34,7 +34,10 @@ export function logWarn(message: string): void {
 export function logError(message: string, error?: unknown): void {
   console.error(`${pc.red('✖')} ${pc.red(pc.bold(message))}`);
   if (error) {
-    if (error instanceof Error && error.stack) {
+    if (typeof error === 'object' && error !== null && 'friendlyMessage' in error && 'suggestion' in error) {
+      const navErr = error as { friendlyMessage: string; suggestion: string };
+      console.error(pc.yellow(`  💡 Suggestion: ${navErr.suggestion}`));
+    } else if (error instanceof Error && error.stack) {
       console.error(pc.dim(error.stack));
     } else {
       console.error(pc.dim(String(error)));
